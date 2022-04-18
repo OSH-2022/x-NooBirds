@@ -18,6 +18,9 @@ Project of the group NooBirds for OSH-2022.
 | 3.12 | group discussion              | [3.12 讨论](./discussions/wtm/3.12&#32;讨论.md)              |
 | 3.18 | group discussion              | [3.18 提议](./discussions/wtm/3.18&#32;提议.md)              |
 | 3.20 | group discussion with advisor | [3.20 会议记录](./discussions/wtm/3.20&#32;会议记录.md)      |
+| 3.27 | group discussion              | [3.27 会议记录]()                                            |
+| 4.6  | group discussion              | [4.6 会议记录]()                                             |
+| 4.12 | group discussion              | [4.12 提交各自报告]()                                        |
 | 4.17 | finished research             | [research](./docs/research.md)                               |
 
 ## Current file tree
