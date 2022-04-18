@@ -5,9 +5,9 @@ Project of the group NooBirds for OSH-2022.
 `x-NooBirds` is a project mainly focusing on the applications of real-time OSes.
 
 ## Group Members
-PB20000196 Tianming Wu
-PB20000266 Linhua Huang
-PB20111618 Yikang Yue
+PB20000196 Tianming Wu \
+PB20000266 Linhua Huang \
+PB20111618 Yikang Yue \
 PB20511899 Yuanyuan Xu
 
 ## Timeline
