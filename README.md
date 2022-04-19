@@ -20,7 +20,7 @@ Project of the group NooBirds for OSH-2022.
 | 3.20 | group discussion with advisor | [3.20 会议记录](./discussions/wtm/3.20&#32;会议记录.md)      |
 | 3.27 | group discussion              | 3.27 会议                                                    |
 | 4.6  | group discussion              | [4.6 会议记录]()                                             |
-| 4.12 | group discussion              | [4.12 提交各自报告并讨论](x-NooBirds/others/research/)        |
+| 4.12 | group discussion              | [4.12 提交各自报告并讨论](https://github.com/OSH-2022/x-NooBirds/tree/main/others/research)|
 | 4.17 | finished research             | [research](./docs/research.md)                               |
 
 ## Current file tree
