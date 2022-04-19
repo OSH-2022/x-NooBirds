@@ -32,9 +32,9 @@ Project of the group NooBirds for OSH-2022.
 |
 +-- group_works
 |   +-- discussions
-|       +-- wtm
-|       +-- xyy
-|
+|   |   +-- wtm
+|   |   +-- xyy
+|   |
 |   +-- others
 |
 +-- README.md
