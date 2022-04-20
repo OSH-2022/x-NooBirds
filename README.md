@@ -23,7 +23,7 @@ Project of the group NooBirds for OSH-2022.
 | 4.12 | group discussion              | [4.12 提交各自报告并讨论](https://github.com/OSH-2022/x-NooBirds/tree/main/group_works/others/research) |
 | 4.17 | research done                 | [research](./docs/research.md)                               |
 | 4.20 | feasibility done              | [feasibility](./docs/feasibility.md)                         |
-| 4.20 | midterm done                  | [midterm](./docs/midterm.md)                                 |
+| 4.20 | midterm done                  | [midterm](./docs/midterm.pptx)                               |
 
 ## Current file tree
 ```code
