@@ -25,6 +25,7 @@ Project of the group NooBirds for OSH-2022.
 | 4.20 | feasibility done              | [feasibility](./docs/feasibility.md)                         |
 | 4.20 | midterm done                  | [midterm](./docs/midterm.pptx)                               |
 | 4.29 | group discussion              | [2022.04.29 meeting](./group_works/discussions/hlh/2022.04.29%20meeting.md) |
+| 5.17 | group discussion              | [5.17 讨论](./group_works/discussions/wtm/5.17%20讨论.md)    |
 
 ## Current file tree
 ```code
