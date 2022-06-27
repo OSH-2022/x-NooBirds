@@ -2,7 +2,7 @@
 
 OBJS_DIR = obj
 
-SRCS = test.cpp detect_const.cpp
+SRCS = test.cpp detect_const.cpp timer.cpp
 
 OBJS = $(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 
