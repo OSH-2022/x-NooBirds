@@ -2,19 +2,19 @@
 
 OBJS_DIR = obj
 
-SRCS = main.cpp camera.cpp bmp.cpp timer.cpp detect.cpp
+SRCS = test.cpp detect_const.cpp
 
 OBJS = $(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 
 CC = g++
-CC_FLAGS = -g -Wall -O3
-INCLUDE = 
-LINK = 
+CC_FLAGS = -g -Wall -O3 `pkg-config --libs --cflags opencv4`
+INCLUDE =
+LINK = `pkg-config --libs --cflags opencv4`
 
 .PHONY:default clean distclean test
 	
 default:test $(OBJS) Makefile
-	$(CC) $(LINK) $(CC_FLAGS) $(OBJS) -o demo
+	$(CC) $(CC_FLAGS) $(OBJS) -o demo $(LINK)
 	@echo "------ build ok ------"
 	
 test: 
@@ -23,7 +23,7 @@ ifneq ($(OBJS_DIR), $(wildcard $(OBJS_DIR)))
 endif
 
 $(OBJS): $(OBJS_DIR)/%.o : %.cpp
-	$(CC) $(LINK) $(CC_FLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CC_FLAGS) $(INCLUDE) -c $< -o $@ $(LINK)
 
 clean:
 	@rm -rf $(OBJS_DIR)/*.o *.o

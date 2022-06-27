@@ -1,20 +1,10 @@
 #ifndef INCLUDES_H_
 #define INCLUDES_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <inttypes.h>
+#include <iostream>
 #include <string>
+#include <sstream>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-
-#include <linux/videodev2.h>
+#include "opencv2/opencv.hpp"
 
 #endif // INCLUDES_H_
