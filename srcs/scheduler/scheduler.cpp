@@ -270,10 +270,57 @@ int main() {
                     break;
                 }
                 break;
+            case cir:
+                if (direction[i] == CLOCKWISE) {
+                    velocity_total = sqrt(pow(obj_vx[i], 2) + pow(obj_vy[i], 2));
+                    angle[i] = angle[i] - velocity_total / cir_radius;
+                    if (angle[i] > 2 * pi) {
+                        angle[i] = angle[i] - 2 * pi;
+                    }
+                    obj_x[i] = cir_center[0] + cir_radius * cos(angle[i]);
+                    obj_y[i] = cir_center[1] + cir_radius * sin(angle[i]);
+                    obj_vx[i] = velocity_total * sin(angle[i]);
+                    obj_vy[i] = -velocity_total * cos(angle[i]);
+                }
+                else { // TO BE DONE
+                }
+                break;
             default:
                 break;
             }
         }
+
+        print_location();
+        scheduler();
+        for (int i = 0; i < OBJ_NUM; i++) {
+            obj_vx[i] = obj_vx[i] * vel_adjust[i];
+            obj_vy[i] = obj_vy[i] * vel_adjust[i];
+        }
+
+        int ret = 0;
+        ret = collision_detection();
+        if (ret == 1) {
+            std::cout << "sim_time " << sim_time << "." << std::endl;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int collision_detection() {
+    long double dist_sq = 0;
+    int j = 0;
+    int k = 0;
+    for (j = 0; j < OBJ_NUM - 1; j++) {
+        for (k = j + 1; k < OBJ_NUM; k++) {
+            dist_sq = pow((obj_x[j] - obj_x[k]), 2) + pow((obj_y[j] - obj_y[k]), 2);
+            if (dist_sq < pow((1.0 * (obj_radius[j] + obj_radius[k])), 2)) {
+                std::cout << "Car " << j << " collided with car " << k << " at sim_time " << sim_time << "!" << std::endl;
+                return 1;
+            }
+        }
+    }
     return 0;
 }
 
@@ -321,4 +368,13 @@ void scheduler() {
         velocity_total_tmp = sqrt(pow(obj_vx_tmp[i], 2) + pow(obj_vy_tmp[i], 2));
         vel_adjust[i] = velocity_total_tmp / velocity_total_initial;
     }
+}
+
+void print_location() {
+    for (int i = 0; i < OBJ_NUM; i++) {
+        std::cout << "Car " << i << ": " << "x: " << obj_x[i] << ", y: " << obj_y[i] << "." << std::endl;
+        std::cout << "Velocity: " << "x: " << obj_vx[i] << ", y: " << obj_vy[i] << "." << std::endl;
+    }
+    std::cout << "At time " << sim_time << "." << std::endl;
+    std::cout << std::endl;
 }
