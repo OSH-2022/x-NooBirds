@@ -12,6 +12,8 @@ public:
     AcrtTime();
     ~AcrtTime();
 
+    void update();
+
     AcrtTime &operator=(const AcrtTime &time);
 };
 
