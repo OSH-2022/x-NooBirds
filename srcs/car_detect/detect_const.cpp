@@ -25,3 +25,14 @@ Mat isBlue(const Mat &src) {
     inRange(src, BLUE_LOWER_LIMIT, BLUE_UPPER_LIMIT, range);
     return range;
 }
+
+Mat isColor(const Mat &src, color_t color) {
+    switch (color)
+    {
+    case    red: return isRed(src);
+    case orange: return isOrange(src);
+    case yellow: return isYellow(src);
+    case   blue: return isBlue(src);
+    default: return Mat(); 
+    }
+}
