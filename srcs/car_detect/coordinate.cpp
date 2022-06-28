@@ -14,7 +14,7 @@ Coordinate::Coordinate(int id) {
 
 	count = 0;
 
-    Mat frame, gsFrame, hsv, erodeHsv;
+    Mat frame, gsFrame, hsv;
 	AcrtTime time;
     do {
 		cap >> frame;
@@ -27,8 +27,6 @@ Coordinate::Coordinate(int id) {
         GaussianBlur(frame, gsFrame, Size(5, 5), 0);
 		// conveter BGR to HSV
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
-		// erode the frame
-        erode(hsv, erodeHsv, Mat());
     } while (!updateBase(hsv));
 
 	while (!trackObject(hsv, time)) {
@@ -42,8 +40,6 @@ Coordinate::Coordinate(int id) {
         GaussianBlur(frame, gsFrame, Size(5, 5), 0);
 		// conveter BGR to HSV
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
-		// erode the frame
-        erode(hsv, erodeHsv, Mat());
 	}
 }
 
@@ -51,7 +47,7 @@ bool Coordinate::run() {
 	bool rst = true;
 	count++;
 
-	Mat frame, gsFrame, hsv, erodeHsv;
+	Mat frame, gsFrame, hsv;
 	AcrtTime time;
 
 	cap >> frame;
@@ -81,9 +77,9 @@ Point2f realPoints[4] = {
 	Point2f(REAL,   0), Point2f(REAL, REAL)
 };
 
-bool Coordinate::updateBase(const Mat &erodeHsv) {
+bool Coordinate::updateBase(const Mat &hsv) {
 	vector<vector<Point>> contours;
-    Mat mask = isRed(erodeHsv);
+    Mat mask = isRed(hsv);
 	// choose the contours
     findContours(mask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
 

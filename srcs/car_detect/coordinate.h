@@ -23,8 +23,8 @@ public:
     bool run();
 
 private:
-    bool updateBase(const Mat &erodeHsv);
-    bool trackObject(const Mat &erodeHsv, const AcrtTime &now);
+    bool updateBase(const Mat &hsv);
+    bool trackObject(const Mat &hsv, const AcrtTime &now);
 
     int count;
 
