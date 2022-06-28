@@ -3,14 +3,18 @@
 
 #include "includes.h"
 
-typedef struct {
+class AcrtTime {
+public:
     int min;
     int sec;
     int msec;
-} accurate_time_t;
 
-void get_time(accurate_time_t *t);
+    AcrtTime();
+    ~AcrtTime();
 
-void print_time();
+    AcrtTime &operator=(const AcrtTime &time);
+};
+
+void printTime();
 
 #endif // TIMER_H_

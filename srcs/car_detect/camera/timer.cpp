@@ -1,15 +1,24 @@
 #include "timer.h"
 
-void get_time(accurate_time_t *t) {
+AcrtTime::AcrtTime() {
     struct timeval time;
     gettimeofday(&time, NULL);
 
-    t->min = time.tv_sec / 60 % 60;
-    t->sec = time.tv_sec % 60;
-    t->msec = time.tv_usec / 1000;
+    min = time.tv_sec / 60 % 60;
+    sec = time.tv_sec % 60;
+    msec = time.tv_usec / 1000;
 }
 
-void print_time() {
+AcrtTime::~AcrtTime() { }
+
+AcrtTime& AcrtTime::operator=(const AcrtTime &time) {
+    min = time.min;
+    sec = time.sec;
+    msec = time.msec;
+    return *this;
+}
+
+void printTime() {
     struct timeval time;
     gettimeofday(&time, NULL);
 
