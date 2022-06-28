@@ -20,8 +20,17 @@ const long double pi = 3.14159265358979323846;
 #define BOTTOM_LEFT  6
 #define LEFT_EDGE    7
 
+#define TRI_UP_CORNER    0
+#define TRI_RIGHT_EDGE   1
+#define TRI_RIGHT_CORNER 2
+#define TRI_DOWN_EDGE    3
+#define TRI_LEFT_CORNER  4
+#define TRI_LEFT_EDGE    5
+
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
+
+#define PRINT_INTERVAL      200
 
 long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
 long double obj_x     [OBJ_NUM];
@@ -31,11 +40,14 @@ long double obj_vy    [OBJ_NUM];
 long double vel_adjust[OBJ_NUM];
 long double safety_coe = 2.5;
 
+long double corner_radius = 200.0;
+
 long double rect_center[2] = {0.0, 0.0};
 long double rect_len = 1000.0;
-long double corner_radius = 200.0;
+
 long double cir_center[2] = {0.0, 0.0};
 long double cir_radius = 1200.0;
+
 long double tri_center[2];
 long double tri_len;
 
@@ -43,7 +55,7 @@ long double angle[OBJ_NUM];
 
 int direction[OBJ_NUM];
 
-int simulation_time = 10;
+int simulation_time = 1000000000;
 int sim_time = 0;
 
 enum traj {rect, cir, tri};
@@ -52,7 +64,8 @@ int obj_traj_seg[OBJ_NUM];
 
 void scheduler();
 int collision_detection();
-void print_location();
+void print_location_verbose();
+void print_location_concise();
 
 int main() {
     obj_x[0] = rect_center[0] - rect_len - corner_radius; 
@@ -82,11 +95,11 @@ int main() {
     direction[2] = CLOCKWISE;
     angle[2] = 3 * pi / 2;
 
-    long double corner_left = 0.0;
-    long double move_dist = 0.0;
-    long double angle_adjust = 0.0;
+    long double corner_left    = 0.0;
+    long double move_dist      = 0.0;
+    long double angle_adjust   = 0.0;
     long double velocity_total = 0.0;
-    long double deviation = 0.0;
+    long double deviation      = 0.0;
 
     for (sim_time = 0; sim_time < simulation_time; sim_time++) {
         for (int i = 0; i < OBJ_NUM; i++) {
@@ -108,8 +121,8 @@ int main() {
                         else {
                             angle[i] = angle[i] - (move_dist) / corner_radius;
                             angle_adjust = angle[i] - pi / 2;
-                            obj_x[i] = rect_center[0] - rect_len - sin(angle_adjust);
-                            obj_y[i] = rect_center[1] + rect_len + cos(angle_adjust);
+                            obj_x[i] = rect_center[0] - rect_len - corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] + rect_len + corner_radius * cos(angle_adjust);
                             obj_vx[i] = velocity_total * cos(angle_adjust);
                             obj_vy[i] = velocity_total * sin(angle_adjust);
                         }
@@ -123,10 +136,10 @@ int main() {
                         if (deviation > 0) {
                             obj_traj_seg[i] = UPPER_RIGHT;
                             angle[i] = pi / 2 - deviation / corner_radius;
-                            obj_x[i] = rect_center[0] + rect_len + sin(angle[i]);
-                            obj_y[i] = rect_center[1] + rect_len + cos(angle[i]);
-                            obj_vx[i] = obj_vx[i] * cos(angle[i]);
-                            obj_vy[i] = -obj_vx[i] * sin(angle[i]);
+                            obj_x[i] = rect_center[0] + rect_len + corner_radius * cos(angle[i]);
+                            obj_y[i] = rect_center[1] + rect_len + corner_radius * sin(angle[i]);
+                            obj_vx[i] = obj_vx[i] * sin(angle[i]);
+                            obj_vy[i] = -obj_vx[i] * cos(angle[i]);
                         }
                         else {
                             obj_x[i] = obj_x[i] + obj_vx[i];
@@ -149,9 +162,9 @@ int main() {
                             obj_vy[i] = -velocity_total;
                         }
                         else {
-                            angle[i] = angle[i] + (move_dist) / corner_radius;
-                            obj_x[i] = rect_center[0] + rect_len + cos(angle[i]);
-                            obj_y[i] = rect_center[1] + rect_len + sin(angle[i]);
+                            angle[i] = angle[i] - (move_dist) / corner_radius;
+                            obj_x[i] = rect_center[0] + rect_len + corner_radius * cos(angle[i]);
+                            obj_y[i] = rect_center[1] + rect_len + corner_radius * sin(angle[i]);
                             obj_vx[i] = velocity_total * sin(angle[i]);
                             obj_vy[i] = -velocity_total * cos(angle[i]);
                         }
@@ -166,8 +179,8 @@ int main() {
                             obj_traj_seg[i] = BOTTOM_RIGHT;
                             angle[i] = 2 * pi - deviation / corner_radius;
                             angle_adjust = angle[i] - 3 * pi / 2;
-                            obj_x[i] = rect_center[0] + rect_len + sin(angle_adjust);
-                            obj_y[i] = rect_center[1] - rect_len - cos(angle_adjust);
+                            obj_x[i] = rect_center[0] + rect_len + corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] - rect_len - corner_radius * cos(angle_adjust);
                             obj_vx[i] = obj_vy[i] * cos(angle_adjust);
                             obj_vy[i] = obj_vy[i] * sin(angle_adjust);
                         }
@@ -194,8 +207,8 @@ int main() {
                         else {
                             angle[i] = angle[i] - move_dist / corner_radius;
                             angle_adjust = angle[i] - 3 * pi / 2;
-                            obj_x[i] = rect_center[0] + rect_len + sin(angle_adjust);
-                            obj_y[i] = rect_center[1] - rect_len - cos(angle_adjust);
+                            obj_x[i] = rect_center[0] + rect_len + corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] - rect_len - corner_radius * cos(angle_adjust);
                             obj_vx[i] = -velocity_total * cos(angle_adjust);
                             obj_vy[i] = -velocity_total * sin(angle_adjust);
                         }
@@ -209,9 +222,9 @@ int main() {
                         if (deviation > 0) {
                             obj_traj_seg[i] = BOTTOM_LEFT;
                             angle[i] = 3 * pi / 2 - deviation / corner_radius;
-                            angle_adjust = angle[i] - 3 * pi / 2;
-                            obj_x[i] = rect_center[0] - rect_len - sin(angle_adjust);
-                            obj_y[i] = rect_center[1] - rect_len - cos(angle_adjust);
+                            angle_adjust = 3 * pi / 2 - angle[i];
+                            obj_x[i] = rect_center[0] - rect_len - corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] - rect_len - corner_radius * cos(angle_adjust);
                             obj_vx[i] = obj_vx[i] * cos(angle_adjust);
                             obj_vy[i] = -obj_vx[i] * sin(angle_adjust);
                         }
@@ -238,10 +251,10 @@ int main() {
                         else {
                             angle[i] = angle[i] - move_dist / corner_radius;
                             angle_adjust = 3 * pi / 2 - angle[i];
-                            obj_x[i] = rect_center[0] - rect_len - sin(angle_adjust);
-                            obj_y[i] = rect_center[1] - rect_len - cos(angle_adjust);
-                            obj_vx[i] = obj_vy[i] * cos(angle_adjust);
-                            obj_vy[i] = obj_vy[i] * sin(angle_adjust);
+                            obj_x[i] = rect_center[0] - rect_len - corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] - rect_len - corner_radius * cos(angle_adjust);
+                            obj_vx[i] = -velocity_total * cos(angle_adjust);
+                            obj_vy[i] = velocity_total * sin(angle_adjust);
                         }
                     }
                     else { // TO BE DONE
@@ -254,8 +267,8 @@ int main() {
                             obj_traj_seg[i] = UPPER_LEFT;
                             angle[i] = pi - deviation / corner_radius;
                             angle_adjust = angle[i] - pi / 2;
-                            obj_x[i] = rect_center[0] - rect_len - sin(angle_adjust);
-                            obj_y[i] = rect_center[1] + rect_len + cos(angle_adjust);
+                            obj_x[i] = rect_center[0] - rect_len - corner_radius * sin(angle_adjust);
+                            obj_y[i] = rect_center[1] + rect_len + corner_radius * cos(angle_adjust);
                             obj_vx[i] = velocity_total * cos(angle_adjust);
                             obj_vy[i] = velocity_total * sin(angle_adjust);
                         }
@@ -285,20 +298,60 @@ int main() {
                 else { // TO BE DONE
                 }
                 break;
+            case tri:
+                switch (obj_traj_seg[i]) {
+                case TRI_UP_CORNER:
+                    if (direction[i] == CLOCKWISE) {
+                        corner_left = corner_radius * (angle[i] - pi / 6);
+                        velocity_total = sqrt(pow(obj_vx[i], 2) + pow(obj_vy[i], 2));
+                        deviation = velocity_total - corner_left;
+                        if (deviation > 0) {
+                            obj_traj_seg[i] = TRI_RIGHT_EDGE;
+                            obj_x[i] = cir_center[0] + sin(pi / 3) * corner_radius + deviation / 2;
+                            obj_y[i] = cir_center[1] + tri_len + corner_radius / 2 - deviation * sin(pi / 3);
+                            obj_vx[i] = velocity_total / 2;
+                            obj_vy[i] = -velocity_total * sin(pi / 3); 
+                        }
+                        else {
+                            angle[i] = angle[i] - velocity_total / corner_radius;
+                            obj_x[i] = tri_center[0] + corner_radius * cos(angle[i]);
+                            obj_y[i] = tri_center[1] + tri_len + corner_radius * sin(angle[i]);
+                            obj_vx[i] = velocity_total * sin(angle[i]);
+                            obj_vy[i] = -velocity_total * cos(angle[i]);
+                        }
+                    }
+                    else { // TO BE DONE
+                    }
+                    break;
+                case TRI_RIGHT_EDGE:
+                    if (direction[i] == CLOCKWISE) {
+                        deviation = obj_x[i] - (tri_center[0] + (tri_len + corner_radius) * cos(pi / 6));
+                        if (deviation > 0) {
+                            obj_traj_seg[i] = TRI_RIGHT_CORNER;
+                            velocity_total = 2 * obj_vx[i];
+                            angle[i] = 13 * pi / 6 - velocity_total / corner_radius;
+                        }
+                    }
+                    else { // TO BE DONE
+                    }
+                    break;
+                default:
+                    break;
+                }
             default:
                 break;
             }
         }
 
-        print_location();
-        scheduler();
-        for (int i = 0; i < OBJ_NUM; i++) {
-            obj_vx[i] = obj_vx[i] * vel_adjust[i];
-            obj_vy[i] = obj_vy[i] * vel_adjust[i];
-        }
+        print_location_concise();
+        // scheduler();
+        // for (int i = 0; i < OBJ_NUM; i++) {
+        //     obj_vx[i] = obj_vx[i] * vel_adjust[i];
+        //     obj_vy[i] = obj_vy[i] * vel_adjust[i];
+        // }
 
         int ret = 0;
-        ret = collision_detection();
+        // ret = collision_detection();
         if (ret == 1) {
             std::cout << "sim_time " << sim_time << "." << std::endl;
             return 1;
@@ -370,11 +423,22 @@ void scheduler() {
     }
 }
 
-void print_location() {
-    for (int i = 0; i < OBJ_NUM; i++) {
-        std::cout << "Car " << i << ": " << "x: " << obj_x[i] << ", y: " << obj_y[i] << "." << std::endl;
-        std::cout << "Velocity: " << "x: " << obj_vx[i] << ", y: " << obj_vy[i] << "." << std::endl;
+void print_location_verbose() {
+    if (sim_time % PRINT_INTERVAL == 0) {
+        for (int i = 0; i < OBJ_NUM; i++) {
+            std::cout << "Car " << i << ": " << "x: " << obj_x[i] << ", y: " << obj_y[i] << "." << std::endl;
+            std::cout << "Velocity: " << "x: " << obj_vx[i] << ", y: " << obj_vy[i] << "." << std::endl;
+        }
+        std::cout << "At time " << sim_time << "." << std::endl;
+        std::cout << std::endl;
     }
-    std::cout << "At time " << sim_time << "." << std::endl;
-    std::cout << std::endl;
+}
+
+void print_location_concise() {
+    if (sim_time % PRINT_INTERVAL == 0) {
+        for (int i = 0; i < OBJ_NUM; i++) {
+            std::cout << obj_x[i] << " " << obj_y[i] << " ";
+        }
+        std::cout << std::endl;
+    }
 }
