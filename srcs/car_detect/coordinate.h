@@ -4,10 +4,12 @@
 #include "includes.h"
 #include "timer.h"
 
+using namespace std;
+using namespace cv;
+
 typedef struct DataPackage {
     AcrtTime time;
-    Point2i cars[3];
-    vector<Point> dangerObj;
+    Point cars[3];
 } Package;
 
 class Coordinate {
@@ -18,11 +20,11 @@ public:
     const mutex& getMutex();
     const Package& getData();
     
-    void run();
+    bool run();
 
 private:
     bool updateBase(const Mat &erodeHsv);
-    bool trackObject(const Mat &frame, const Mat &realHsv, const AcrtTime &now);
+    bool trackObject(const Mat &erodeHsv, const AcrtTime &now);
 
     int count;
 

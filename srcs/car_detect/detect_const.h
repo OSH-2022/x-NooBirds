@@ -15,11 +15,11 @@ using namespace cv;
 #define RED_LOWER_LIMIT2   Scalar(  0, 100, 100)
 #define RED_UPPER_LIMIT2   Scalar( 10, 255, 255)
 
-#define ORANGE_LOWER_LIMIT Scalar( 10, 100,  50)
-#define ORANGE_UPPER_LIMIT Scalar( 20, 255, 255)
-
-#define YELLOW_LOWER_LIMIT Scalar( 20, 100,  50)
+#define YELLOW_LOWER_LIMIT Scalar( 10, 100,  50)
 #define YELLOW_UPPER_LIMIT Scalar( 35, 255, 255)
+
+#define GREEN_LOWER_LIMIT  Scalar( 45,  45,  45)
+#define GREEN_UPPER_LIMIT  Scalar( 75, 255, 255)
 
 #define BLUE_LOWER_LIMIT   Scalar( 80,  50,  50)
 #define BLUE_UPPER_LIMIT   Scalar(100, 255, 255)
@@ -27,13 +27,12 @@ using namespace cv;
 #define REAL 400
 
 #define DETECT_TOLERANCE 10
-#define OBJ_MIN_AREA 36
 
-enum color_t {red, orange, yellow, blue};
+enum color_t {red, yellow, green, blue};
 
 Mat isRed(const Mat &src);
-Mat isOrange(const Mat &src);
 Mat isYellow(const Mat &src);
+Mat isGreen(const Mat &src);
 Mat isBlue(const Mat &src);
 
 Mat isColor(const Mat &src, color_t color);

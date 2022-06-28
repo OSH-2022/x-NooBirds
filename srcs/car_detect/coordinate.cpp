@@ -29,13 +29,9 @@ Coordinate::Coordinate(int id) {
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
 		// erode the frame
         erode(hsv, erodeHsv, Mat());
-    } while (!updateBase(erodeHsv));
+    } while (!updateBase(hsv));
 
-	Mat realFrame, realHsv;
-	// prospective convert
-	warpPerspective(frame, realFrame, convert, realHsv.size());
-	warpPerspective(erodeHsv, realHsv, convert, realHsv.size());
-	while (!trackObject(realFrame, realHsv, time)) {
+	while (!trackObject(hsv, time)) {
 		cap >> frame;
 		time.update();
 
@@ -48,13 +44,11 @@ Coordinate::Coordinate(int id) {
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
 		// erode the frame
         erode(hsv, erodeHsv, Mat());
-		// prospective convert
-		warpPerspective(frame, realFrame, convert, realHsv.size());
-		warpPerspective(erodeHsv, realHsv, convert, realHsv.size());
 	}
 }
 
-void Coordinate::run() {
+bool Coordinate::run() {
+	bool rst = true;
 	count++;
 
 	Mat frame, gsFrame, hsv, erodeHsv;
@@ -64,24 +58,18 @@ void Coordinate::run() {
 	time.update();
 
     if (frame.empty())
-		return;
+		return false;
 
 	// Gaussian Blur
     GaussianBlur(frame, gsFrame, Size(5, 5), 0);
 	// conveter BGR to HSV
     cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
-	// erode the frame
-    erode(hsv, erodeHsv, Mat());
 
 	if (!(count & 15)) {
-		updateBase(erodeHsv);
+		rst = rst && updateBase(hsv);
 	}
 
-	Mat realFrame, realHsv;
-	warpPerspective(frame, realFrame, convert, realHsv.size());
-	warpPerspective(erodeHsv, realHsv, convert, realHsv.size());
-
-	trackObject(realFrame, realHsv, time);
+	return rst && trackObject(hsv, time);
 }
 
 bool areaLarger(const vector<Point> &area1, vector<Point> &area2) {
@@ -141,37 +129,46 @@ vector<vector<Point>>::const_iterator areaMax(const vector<vector<Point>> &conto
 	auto rst = vector<vector<Point>>::const_iterator();
 	for (auto itr = contours.begin(); itr != contours.end(); ++itr) {
 		int area = contourArea(*itr);
-		if (area > max) rst = itr;
+		if (area > max) {
+			rst = itr;
+			max = area;
+		}
 	}
 	return rst;
 }
 
-static inline int square(int num) {
+static inline float square(float num) {
 	return num * num;
 }
 
-static inline float dist(const Point2i &a, const Point2i &b) {
+static inline float dist(const Point2f &a, const Point2f &b) {
 	return sqrt(square(a.x - b.x) + square(a.y - b.y));
 }
 
-bool isCar(const Point2i &obj, const Point2i cars[3]) {
+bool isCar(const Point2f &obj, const Point2f cars[3]) {
 	for (int i = 0; i < 3; i++)
 		if (dist(obj, cars[i]) > DETECT_TOLERANCE) return false;
 	return true;
 }
 
-bool Coordinate::trackObject(const Mat &frame, const Mat &realHsv, const AcrtTime &now) {
-	Point2i cars[3];
+bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
+	Point2f cars[3];
 
-	Mat colorMask;
+	Mat erodeHsv, colorMask, realMask;
 	vector<vector<Point>> contours;
 	Point2f rectPoints[4];
 
-	for (int color = orange; color <= blue; ++color) {
-		colorMask = isColor(realHsv, (color_t)color);
-    	findContours(colorMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+	erode(hsv, erodeHsv, Mat());
+
+	for (int color = yellow; color <= blue; ++color) {
+		colorMask = isColor(erodeHsv, (color_t)color);
+		warpPerspective(colorMask, realMask, convert, Size(REAL, REAL));
+		imshow("", realMask);
+		waitKey(30);
+    	findContours(realMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
 		if (contours.empty()) return false;
-    	minAreaRect(*areaMax(contours)).points(rectPoints);
+		auto rect = minAreaRect(*areaMax(contours));
+    	rect.points(rectPoints);
 		cars[color - 1] = Point(
 			(rectPoints[0].x + rectPoints[1].x
 		   + rectPoints[2].x + rectPoints[3].x) / 4,
@@ -180,32 +177,10 @@ bool Coordinate::trackObject(const Mat &frame, const Mat &realHsv, const AcrtTim
 		);
 	}
 
-	Mat kernel = getStructuringElement(MORPH_RECT, Size(3,3));
-	auto fgbg = createBackgroundSubtractorKNN(500, 400, false);
-	Mat maskKNN, move;
-	fgbg->apply(frame, maskKNN);
-	morphologyEx(maskKNN, move, MORPH_OPEN, kernel, Point(-1,-1));
-
-	findContours(move, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
-	vector<Point> dangerObj;
-	for (auto itr = contours.begin(); itr != contours.end(); itr++) {
-		if (contourArea(*itr) < OBJ_MIN_AREA) continue;
-		minAreaRect(*itr).points(rectPoints);
-		Point obj(
-			(rectPoints[0].x + rectPoints[1].x
-		   + rectPoints[2].x + rectPoints[3].x) / 4,
-			(rectPoints[0].y + rectPoints[1].y
-		   + rectPoints[2].y + rectPoints[3].y) / 4
-		);
-		if (isCar(obj, cars)) continue;
-		else dangerObj.push_back(obj);
-	}
-
 	lock_guard<mutex> guard(dataMutex);
 
 	data.time = now;
-	for (int id = 0; id < 3; id++) data.cars[id] = cars[id]; 
-	data.dangerObj = dangerObj;
+	for (int id = 0; id < 3; id++) data.cars[id] = cars[id];
 
 	return true;
 }
