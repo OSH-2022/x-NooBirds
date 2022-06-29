@@ -8,6 +8,10 @@ Coordinate::Coordinate(int id) {
 	cap.set(CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 	cap.set(CAP_PROP_FPS, FPS);
 
+	// move object detect
+	fgbg = createBackgroundSubtractorKNN();
+	fgbg->setDetectShadows(false);
+
 	// check camera state
 	if (!cap.isOpened())
 		exit(-1);
@@ -31,7 +35,7 @@ Coordinate::Coordinate(int id) {
 
 	printf("Base points initialization complete!\n");
 
-	while (!trackObject(hsv, time)) {
+	while (!trackObject(hsv, time, frame)) {
 		cap >> frame;
 		time.update();
 
@@ -69,7 +73,7 @@ bool Coordinate::run() {
 		rst = rst && updateBase(hsv);
 	}
 
-	return rst && trackObject(hsv, time);
+	return rst && trackObject(hsv, time, frame);
 }
 
 bool areaLarger(const vector<Point> &area1, vector<Point> &area2) {
@@ -151,7 +155,7 @@ bool isCar(const Point2f &obj, const Point2f cars[3]) {
 	return true;
 }
 
-bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
+bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &frame) {
 	Point2f cars[3];
 
 	Mat colorMask, realMask, erodeMask;
@@ -179,10 +183,35 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
 		);
 	}
 
+	Mat fgmask, refinedMask, realKNNMask;
+	fgbg->apply(frame, fgmask);
+
+	auto kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+	morphologyEx(fgmask, refinedMask, MORPH_OPEN, kernel);
+
+	warpPerspective(refinedMask, realKNNMask, convert, Size(REAL, REAL));
+	// find contours
+    findContours(realKNNMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+
+	vector<Point> dangerObj;
+	for (auto itr = contours.begin(); itr != contours.end(); itr++) {
+		if (contourArea(*itr) < MIN_ACCEPT_SIZE) continue;
+		minAreaRect(*itr).points(rectPoints);
+		Point obj(
+			(rectPoints[0].x + rectPoints[1].x
+		   + rectPoints[2].x + rectPoints[3].x) / 4,
+			(rectPoints[0].y + rectPoints[1].y
+		   + rectPoints[2].y + rectPoints[3].y) / 4
+		);
+		if (isCar(obj, cars)) continue;
+		else dangerObj.push_back(obj);
+	}
+
 	lock_guard<mutex> guard(dataMutex);
 
 	data.time = now;
 	for (int id = 0; id < 3; id++) data.cars[id] = cars[id];
+	data.dangerObj = dangerObj;
 
 	return true;
 }
