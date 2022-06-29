@@ -29,6 +29,8 @@ Coordinate::Coordinate(int id) {
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
     } while (!updateBase(hsv));
 
+	printf("Base points initialization complete!\n");
+
 	while (!trackObject(hsv, time)) {
 		cap >> frame;
 		time.update();
@@ -41,6 +43,8 @@ Coordinate::Coordinate(int id) {
 		// conveter BGR to HSV
         cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
 	}
+
+	printf("Places of cars initialization complete!\n");
 }
 
 bool Coordinate::run() {
@@ -73,8 +77,8 @@ bool areaLarger(const vector<Point> &area1, vector<Point> &area2) {
 }
 
 Point2f realPoints[4] = {
-    Point2f(   0,   0), Point2f(   0, REAL),
-	Point2f(REAL,   0), Point2f(REAL, REAL)
+    Point2f(   0, REAL), Point2f(REAL, REAL),
+	Point2f(   0,    0), Point2f(REAL,    0)
 };
 
 bool Coordinate::updateBase(const Mat &hsv) {
@@ -150,19 +154,21 @@ bool isCar(const Point2f &obj, const Point2f cars[3]) {
 bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
 	Point2f cars[3];
 
-	Mat erodeHsv, colorMask, realMask;
+	Mat colorMask, realMask, erodeMask;
 	vector<vector<Point>> contours;
 	Point2f rectPoints[4];
 
-	erode(hsv, erodeHsv, Mat());
-
 	for (int color = yellow; color <= blue; ++color) {
-		colorMask = isColor(erodeHsv, (color_t)color);
+		colorMask = isColor(hsv, (color_t)color);
+		// convert perspective
 		warpPerspective(colorMask, realMask, convert, Size(REAL, REAL));
-		imshow("", realMask);
-		waitKey(30);
-    	findContours(realMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+		// erode the mask
+		erode(realMask, erodeMask, Mat());
+		// find contours
+    	findContours(erodeMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+		// find nothing, car detection failed
 		if (contours.empty()) return false;
+		// choose the max area
 		auto rect = minAreaRect(*areaMax(contours));
     	rect.points(rectPoints);
 		cars[color - 1] = Point(
