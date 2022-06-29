@@ -149,10 +149,12 @@ static inline float dist(const Point2f &a, const Point2f &b) {
 	return sqrt(square(a.x - b.x) + square(a.y - b.y));
 }
 
-bool isCar(const Point2f &obj, const Point2f cars[3]) {
+bool isCar(const Point2f &obj, float radius, const Point2f cars[3]) {
 	for (int i = 0; i < 3; i++)
-		if (dist(obj, cars[i]) > DETECT_TOLERANCE) return false;
-	return true;
+		if (dist(obj, cars[i]) < radius)
+			// belongs to a certain car
+			return true;
+	return false;
 }
 
 bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &frame) {
@@ -193,18 +195,16 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &fra
 	// find contours
     findContours(realKNNMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
 
-	vector<Point> dangerObj;
+	vector<pair<Point, float>> dangerObj;
+	Point2f center;
+	float radius;
 	for (auto itr = contours.begin(); itr != contours.end(); itr++) {
-		if (contourArea(*itr) < MIN_ACCEPT_SIZE) continue;
-		minAreaRect(*itr).points(rectPoints);
-		Point obj(
-			(rectPoints[0].x + rectPoints[1].x
-		   + rectPoints[2].x + rectPoints[3].x) / 4,
-			(rectPoints[0].y + rectPoints[1].y
-		   + rectPoints[2].y + rectPoints[3].y) / 4
-		);
-		if (isCar(obj, cars)) continue;
-		else dangerObj.push_back(obj);
+		minEnclosingCircle(*itr, center, radius);
+		// ignore real small objects
+		if (radius < MIN_ACCEPT_RADIUS) continue;
+		// ignore cars
+		if (isCar(center, radius, cars)) continue;
+		else dangerObj.push_back(pair<Point, float>(center, radius));
 	}
 
 	lock_guard<mutex> guard(dataMutex);

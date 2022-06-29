@@ -10,7 +10,7 @@ using namespace cv;
 typedef struct DataPackage {
     AcrtTime time;
     Point cars[3];
-    vector<Point> dangerObj;
+    vector<pair<Point, float>> dangerObj;
 } Package;
 
 class Coordinate {

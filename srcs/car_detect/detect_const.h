@@ -26,8 +26,7 @@ using namespace cv;
 
 #define REAL 400
 
-#define MIN_ACCEPT_SIZE  16
-#define DETECT_TOLERANCE 10
+#define MIN_ACCEPT_RADIUS 8
 
 enum color_t {red, yellow, green, blue};
 
