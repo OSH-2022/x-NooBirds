@@ -6,6 +6,8 @@
 using namespace std;
 using namespace cv;
 
+#define FRAME_INIT_COUNT 64
+
 #define FRAME_WIDTH  640
 #define FRAME_HEIGHT 480
 #define FPS 30
@@ -18,11 +20,11 @@ using namespace cv;
 #define YELLOW_LOWER_LIMIT Scalar( 10, 100,  50)
 #define YELLOW_UPPER_LIMIT Scalar( 35, 255, 255)
 
-#define GREEN_LOWER_LIMIT  Scalar( 45,  45,  45)
+#define GREEN_LOWER_LIMIT  Scalar( 45, 100,  50)
 #define GREEN_UPPER_LIMIT  Scalar( 75, 255, 255)
 
-#define BLUE_LOWER_LIMIT   Scalar( 80,  50,  50)
-#define BLUE_UPPER_LIMIT   Scalar(100, 255, 255)
+#define BLUE_LOWER_LIMIT   Scalar( 80,  90,  50)
+#define BLUE_UPPER_LIMIT   Scalar(110, 255, 255)
 
 #define REAL 400
 

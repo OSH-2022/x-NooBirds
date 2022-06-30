@@ -8,10 +8,6 @@ Coordinate::Coordinate(int id) {
 	cap.set(CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 	cap.set(CAP_PROP_FPS, FPS);
 
-	// move object detect
-	fgbg = createBackgroundSubtractorKNN();
-	fgbg->setDetectShadows(false);
-
 	// check camera state
 	if (!cap.isOpened())
 		exit(-1);
@@ -20,6 +16,12 @@ Coordinate::Coordinate(int id) {
 
     Mat frame, gsFrame, hsv;
 	AcrtTime time;
+
+	int initFrameCount = FRAME_INIT_COUNT;
+	do {
+		cap >> frame;
+	} while(initFrameCount-- > 0);
+
     do {
 		cap >> frame;
 		time.update();
@@ -35,7 +37,7 @@ Coordinate::Coordinate(int id) {
 
 	printf("Base points initialization complete!\n");
 
-	while (!trackObject(hsv, time, frame)) {
+	while (!trackObject(hsv, time)) {
 		cap >> frame;
 		time.update();
 
@@ -70,10 +72,10 @@ bool Coordinate::run() {
     cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
 
 	if (!(count & 15)) {
-		rst = rst && updateBase(hsv);
+		rst = updateBase(hsv) && rst;
 	}
 
-	return rst && trackObject(hsv, time, frame);
+	return trackObject(hsv, time) && rst;
 }
 
 bool areaLarger(const vector<Point> &area1, vector<Point> &area2) {
@@ -157,7 +159,7 @@ bool isCar(const Point2f &obj, float radius, const Point2f cars[3]) {
 	return false;
 }
 
-bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &frame) {
+bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
 	Point2f cars[3];
 
 	Mat colorMask, realMask, erodeMask;
@@ -169,7 +171,7 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &fra
 		// convert perspective
 		warpPerspective(colorMask, realMask, convert, Size(REAL, REAL));
 		// erode the mask
-		erode(realMask, erodeMask, Mat());
+		erode(colorMask, erodeMask, Mat());
 		// find contours
     	findContours(erodeMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
 		// find nothing, car detection failed
@@ -185,33 +187,10 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now, const Mat &fra
 		);
 	}
 
-	Mat fgmask, refinedMask, realKNNMask;
-	fgbg->apply(frame, fgmask);
-
-	auto kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-	morphologyEx(fgmask, refinedMask, MORPH_OPEN, kernel);
-
-	warpPerspective(refinedMask, realKNNMask, convert, Size(REAL, REAL));
-	// find contours
-    findContours(realKNNMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
-
-	vector<pair<Point, float>> dangerObj;
-	Point2f center;
-	float radius;
-	for (auto itr = contours.begin(); itr != contours.end(); itr++) {
-		minEnclosingCircle(*itr, center, radius);
-		// ignore real small objects
-		if (radius < MIN_ACCEPT_RADIUS) continue;
-		// ignore cars
-		if (isCar(center, radius, cars)) continue;
-		else dangerObj.push_back(pair<Point, float>(center, radius));
-	}
-
 	lock_guard<mutex> guard(dataMutex);
 
 	data.time = now;
 	for (int id = 0; id < 3; id++) data.cars[id] = cars[id];
-	data.dangerObj = dangerObj;
 
 	return true;
 }
