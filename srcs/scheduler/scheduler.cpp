@@ -8,19 +8,19 @@
 // velocity unit: mm / ms
 
 const long double pi = 3.14159265358979323846;
-const long double adj_step_size = 0.1;
-const int adj_times = 8;
+const long double adj_step_size = 0.97;
+const int adj_times = 10;
 
 #define OBJ_NUM       3
 
-
+#define PRINT_INTERVAL      200
 #define TIME_BET_SCHE 50
+#define SCHE_INTERVAL 50
 
 int is_adjust[OBJ_NUM] = {0};
-long double initial_vel[OBJ_NUM];
+long double initial_vel[OBJ_NUM]; 
 // used by scheduler 1
 // #define RATIO         5
-#define SCHE_INTERVAL 10
 // used by scheduler 1
 
 #define UPPER_LEFT   0
@@ -42,15 +42,13 @@ long double initial_vel[OBJ_NUM];
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
-#define PRINT_INTERVAL      200
-
 long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
 long double obj_x     [OBJ_NUM];
 long double obj_y     [OBJ_NUM];
 long double obj_vx    [OBJ_NUM];
 long double obj_vy    [OBJ_NUM];
 long double vel_adjust[OBJ_NUM][2];
-long double safety_coe = 1.5;
+long double safety_coe = 2;
 
 long double corner_radius = 200.0;
 
@@ -102,13 +100,13 @@ int main(int argc, char **argv) {
     direction[1] = CLOCKWISE;
     angle[1] = pi / 2;
 
-    obj_x[2] = cir_center[0];
-    obj_y[2] = cir_center[1] - cir_radius;
+    obj_x[2] = rect_center[0];
+    obj_y[2] = rect_center[1] - rect_len - corner_radius;
     initial_vel[2] = 0.3;
     obj_vx[2] = -0.3;
     obj_vy[2] = 0.0;
-    obj_traj[2] = cir;
-    obj_traj_seg[2] = 0;
+    obj_traj[2] = rect;
+    obj_traj_seg[2] = BOTTOM_EDGE;
     direction[2] = CLOCKWISE;
     angle[2] = 3 * pi / 2;
 
@@ -304,8 +302,8 @@ int main(int argc, char **argv) {
                 if (direction[i] == CLOCKWISE) {
                     velocity_total = sqrt(pow(obj_vx[i], 2) + pow(obj_vy[i], 2));
                     angle[i] = angle[i] - velocity_total / cir_radius;
-                    if (angle[i] > 2 * pi) {
-                        angle[i] = angle[i] - 2 * pi;
+                    if (angle[i] < 0) {
+                        angle[i] = angle[i] = 2 * pi;
                     }
                     obj_x[i] = cir_center[0] + cir_radius * cos(angle[i]);
                     obj_y[i] = cir_center[1] + cir_radius * sin(angle[i]);
@@ -468,9 +466,9 @@ void scheduler_1() {
                             long double j_vy = adj_coe * obj_vy_initial[j];
                             long double k_vx = obj_vx_initial[k];
                             long double k_vy = obj_vy_initial[k];
+                            success = 1;
+                            int dist_sq;
                             for (int m = 0; m < SCHE_INTERVAL; m++) {
-                                success = 1;
-                                int dist_sq;
                                 dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
                                 if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
                                     success = 0;
@@ -489,6 +487,8 @@ void scheduler_1() {
                         if (success == 1) {
                             is_adjust[j] = 1;
                             adjusted_car = j;
+                            // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
+                            // print_location_verbose();
                             break;
                         }
                     }
@@ -506,9 +506,9 @@ void scheduler_1() {
                             long double j_vy = obj_vy_initial[j];
                             long double k_vx = adj_coe * obj_vx_initial[k];
                             long double k_vy = adj_coe * obj_vy_initial[k];
+                            success = 1;
+                            int dist_sq;
                             for (int m = 0; m < SCHE_INTERVAL; m++) {
-                                success = 1;
-                                int dist_sq;
                                 dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
                                 if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
                                     success = 0;
@@ -527,6 +527,8 @@ void scheduler_1() {
                         if (success == 1) {
                             is_adjust[k] = 1;
                             adjusted_car = k;
+                            // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
+                            // print_location_verbose();
                             break;
                         }
                     }
@@ -535,6 +537,9 @@ void scheduler_1() {
             if (success == 1) {
                 break;
             }
+        }
+        if (success == 1) {
+            break;
         }
     }
 
@@ -586,15 +591,20 @@ void scheduler_1() {
                         }
                     }
                 }
-                if (is_still_safe = 1) {
+                if (is_still_safe == 1) {
                     is_update = 1;
                     updated_car = n;
                     is_adjust[n] = 0;
+                    // std::cout << "Car " << updated_car << " is updated at time " << sim_time << "." << std::endl;
+                    // print_location_verbose();
                     break;
                 }
             }
         }
     }
+
+
+
 
     if (is_safe == 1) {
         if (is_update == 1) {
@@ -621,8 +631,8 @@ void scheduler_1() {
     else {
         for (i = 0; i < OBJ_NUM; i++) {
             if (i == adjusted_car) {
-                vel_adjust[i][0] = (adj_coe - adj_step_size) * obj_vx[i];
-                vel_adjust[i][1] = (adj_coe - adj_step_size) * obj_vy[i];
+                vel_adjust[i][0] = adj_coe * obj_vx[i];
+                vel_adjust[i][1] = adj_coe * obj_vy[i];
             }
             else {
                 vel_adjust[i][0] = obj_vx[i];
