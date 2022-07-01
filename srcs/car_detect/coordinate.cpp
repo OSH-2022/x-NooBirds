@@ -2,8 +2,9 @@
 #include "detect_const.h"
 
 Coordinate::Coordinate(int id) {
+	if (id == -1) return;
     // open camera
-	cap.open(0);
+	cap.open(id);
 	cap.set(CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
 	cap.set(CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 	cap.set(CAP_PROP_FPS, FPS);
@@ -53,13 +54,24 @@ Coordinate::Coordinate(int id) {
 	printf("Places of cars initialization complete!\n");
 }
 
-bool Coordinate::run() {
+bool Coordinate::run(bool fake) {
 	bool rst = true;
 	count++;
 
-	Mat frame, gsFrame, hsv;
 	AcrtTime time;
 
+	if (fake) {
+		if (time - data.time < 33) {
+			// emulate an fps around 30
+			return false;
+		}
+		for (int id = 0; id < 3; id++)
+			data.cars[id] = Point2f(1 + time.msec + time.sec * 1000, 1);
+		data.time = time;
+		return true;
+	}
+
+	Mat frame, gsFrame, hsv;
 	cap >> frame;
 	time.update();
 
@@ -199,7 +211,7 @@ Coordinate::~Coordinate() {
     cap.release();
 }
 
-const mutex& Coordinate::getMutex() {
+mutex& Coordinate::getMutex() {
     return dataMutex;
 }
 

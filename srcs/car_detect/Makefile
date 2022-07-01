@@ -7,7 +7,7 @@ SRCS = test.cpp detect_const.cpp timer.cpp coordinate.cpp
 OBJS = $(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 
 CC = g++
-CC_FLAGS = -g -Wall -O3 `pkg-config --libs --cflags opencv4`
+CC_FLAGS = -g -Wall -O3 `pkg-config --libs --cflags opencv4` -std=c++17
 INCLUDE =
 LINK = `pkg-config --libs --cflags opencv4`
 
