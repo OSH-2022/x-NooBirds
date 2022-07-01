@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -20,6 +21,11 @@ AcrtTime tracker_time;
 RVO::Vector2 X[N];    // observed position of agent
 RVO::Vector2 V[N];    // observed velocity of agent
 
+struct remote_control {
+    int write_fds = -1;
+    std::string cmdline;
+} rctrl[3];
+
 // receives data from object tracking module
 // stores data in global arrays
 void *thread_object_tracking(void *args) {
@@ -36,11 +42,14 @@ void *thread_object_tracking(void *args) {
     }
     const long double alpha = 0.5;      // speed inertia
     while (true) {
-        bool has_new_data = tracker.run(true);
+        const bool use_fake_data = false;
+        bool has_new_data = tracker.run(use_fake_data);
 
         // update velocity
         if (has_new_data) {
             // TODO use a more sophisticated algorithm to determine speed
+            // ASSIGNED TO: yyk
+
             int ms_elapsed = D.time - tracker_time;
             if (ms_elapsed <= 1) continue;
             tracker_time = D.time;
@@ -48,14 +57,23 @@ void *thread_object_tracking(void *args) {
             for (int i = 0; i < 3; i++) {
                 // TODO unit of time
                 RVO::Vector2 newX = RVO::Vector2(D.cars[i].x, D.cars[i].y);
-                V[i] = alpha * V[i] + (1-alpha) * (newX - X[i]) / ms_elapsed;
-                X[i] = newX;
+                V[i] = alpha * V[i] + (1-alpha) * (newX - X[i]) / ms_elapsed * 1000;
+                X[i] = alpha * X[i] + (1-alpha) * newX;
             }
             sem_post(Fresh);
             sem_post(Mutex_pipe1);
 #ifdef __DEBUG__
-            printf("vx[0] = %lf\n", (double)V[0].x());
-            D.time.print();
+            // print velocity in polar and cartesian coordinates
+            // printf("v[0] = [%+6.2lf, %+6.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[0]), (double)(V[0].y() / V[0].x()), (double)V[0].x(), (double)V[0].y());
+
+            // print CSV (x, y, vel)
+            // printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
+
+            // print position pairs
+            // printf("x[0] = (%.2lf, %.2lf)\n", (double)X[0].x(), (double)X[0].y());
+
+            // print time
+            // D.time.print();
 #endif
         }
     }
@@ -71,12 +89,13 @@ void *thread_sched_RVO2(void *args) {
     RVOScheduler sched;
 
     std::vector<RVO::Vector2> goals;
-    goals.push_back(RVO::Vector2(1, 0));
-    goals.push_back(RVO::Vector2(2, 2));
-    goals.push_back(RVO::Vector2(3, 3));
+    goals.push_back(RVO::Vector2(50, 350));
+    goals.push_back(RVO::Vector2(390, 340));
+    goals.push_back(RVO::Vector2(40, 40));
     sched.setGoal(goals);
+    RVO::Vector2 gg(350, 50);
 
-    PackageWithVel sched_data;
+    PackageWithVel sched_data, pilot_data;
 
     while (true) {
         sem_wait(Fresh);
@@ -87,25 +106,62 @@ void *thread_sched_RVO2(void *args) {
             sched_data.vels[i] = V[i];
         }
         sem_post(Mutex_pipe1);
+
         sched.setData(sched_data);
+        sched.setGoal(goals);
         sched.step();
-        // sched.setData(sched.getNewData());
-        sched_data = sched.getNewData();
+
+        if (1) {
+            pilot_data = sched.getNewData();
+        } else {
+            // pilot_data.vels[0] = RVO::Vector2((float)sched_data.time.msec / 1000, 0.00);
+            float periodical = (float)sched_data.time.msec / 1000;
+            pilot_data.vels[0] = RVO::Vector2(cos(periodical * 3.1416), sin(periodical * 3.1416));
+            pilot_data.time.update();
+        }
+        // sched.setData(pilot_data);
+
         // TODO write new speed data to pipe, if ready
+        char buf[1024];
+        float delta_angle, delta_speed;
+        for (int i = 0; i < 3; i++) {
+            if (rctrl[i].write_fds == -1)
+                continue;
+            // std::cerr << i << ", " << pilot_data.vels[i] << std::endl;
+            RVO::Vector2 v1 = pilot_data.vels[i],
+                         v0 = sched_data.vels[i];
+            delta_angle =
+                asinf(
+                    (v1.x() * v0.y() - v1.y() * v0.x())
+                    / (RVO::abs(v1) * RVO::abs(v0))
+                ) * 2 / 3.1416;
+            printf("delta angle = %+6.4lf\n", (double)delta_angle);
+            if (isnan(delta_angle)) delta_angle = 0.00;
+            // delta_speed = RVO::abs(v1) / RVO::abs(v0);
+            delta_speed = 0.5;
+            double dist = RVO::abs(pilot_data.cars[i] - goals[i]);
+            if (dist < 70) {
+                delta_speed = 0;
+                std::swap(goals[i], gg);
+                std::cerr << "swap goal!\n";
+            }
+            int buflen
+                = sprintf(buf, "%f %f\n", delta_angle, delta_speed);
+            int pos = 0;
+            while (pos < buflen)
+                pos += write(rctrl[i].write_fds, buf + pos, buflen - pos);
+        }
+        sched_data = pilot_data;
 #ifdef __DEBUG__
-        sched_data.time.print();
-        printf("new vx[0] = %lf\n", (double)sched_data.cars[0].x());
+        // sched_data.time.print();
+        // printf("new v[0] = %lf\n", (double)sched_data.vels[0].x());
+        // printf("new v[0] = [%+6.2lf, %+6.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[0]), (double)(V[0].y() / V[0].x()), (double)V[0].x(), (double)V[0].y());
 #endif
     }
     return NULL;
 }
 
 // use some <ssh in subprocess> wizardry to control the car.
-struct remote_control {
-    int write_fds = -1;
-    std::string cmdline;
-} rctrl[3];
-
 void *thread_send_msg(void *args) {
     remote_control *pctrl = (remote_control *)args;
     std::string &s = pctrl->cmdline;
@@ -135,6 +191,9 @@ void *thread_send_msg(void *args) {
         assert(dup(fds[0]) == STDIN_FILENO);
         close(fds[0]);
         close(STDOUT_FILENO);
+        // close(STDERR_FILENO);
+#ifndef __DEBUG__
+#endif
 
         execvp(argv[0].c_str(), arg_ptrs);
     } else {
@@ -170,34 +229,38 @@ int main() {
         assert(!res);
     }
 
-    Coordinate tracker(-1);
+// /*
+    // Coordinate tracker(-1);
+    Coordinate tracker(1);
     res = pthread_create(&pids[++total], &attr, thread_object_tracking, &tracker);
     assert(!res);
     res = pthread_create(&pids[++total], &attr, thread_sched_RVO2, NULL);
     assert(!res);
+// */
 
-    rctrl[0].cmdline = "ssh -T wtm@localhost /usr/local/bin/lolcat";
-    rctrl[1].cmdline = "ls";
+    // rctrl[0].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
+    rctrl[0].cmdline = "ssh -t -t pi@192.168.43.167 /home/pi/startup.sh";
+    rctrl[1].cmdline = "ssh -t -t pi@172.20.10.13";
     rctrl[2].cmdline = "ls";
 
-/*
     res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+0);
     assert(!res);
-    // res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+1);
-    // assert(!res);
+
+/*
+    res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+1);
+    assert(!res);
     // res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+2);
     // assert(!res);
+*/
 
-    sleep(4);
+    sleep(2);
 
     res = pthread_attr_destroy(&attr);
     assert(!res);
 
-    char buf[] = "echo 1 2 3 4 5 6 7 8\nqwqwqw\n";
-    int pos = 0;
-    while (pos < sizeof(buf))
-        pos += write(rctrl[0].write_fds, buf + pos, sizeof(buf) - pos);
+/*
 */
+    // sleep(10);
 
     for (int i = 0; i <= total; i++) {
         pthread_join(pids[i], NULL);

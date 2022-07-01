@@ -20,9 +20,9 @@ Mat isGreen(const Mat &src) {
     return range;
 }
 
-Mat isBlue(const Mat &src) {
+Mat isPink(const Mat &src) {
     Mat range;
-    inRange(src, BLUE_LOWER_LIMIT, BLUE_UPPER_LIMIT, range);
+    inRange(src, PINK_LOWER_LIMIT, PINK_UPPER_LIMIT, range);
     return range;
 }
 
@@ -32,7 +32,7 @@ Mat isColor(const Mat &src, color_t color) {
     case    red: return isRed(src);
     case yellow: return isYellow(src);
     case  green: return isGreen(src);
-    case   blue: return isBlue(src);
+    case   pink: return isPink(src);
     default: return Mat();
     }
 }

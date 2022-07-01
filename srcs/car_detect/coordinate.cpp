@@ -178,12 +178,21 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
 	vector<vector<Point>> contours;
 	Point2f rectPoints[4];
 
-	for (int color = yellow; color <= blue; ++color) {
+	for (int color = yellow; color <= pink; ++color) {
+	// for (int color = yellow; color <= yellow; ++color) {
 		colorMask = isColor(hsv, (color_t)color);
 		// convert perspective
 		warpPerspective(colorMask, realMask, convert, Size(REAL, REAL));
+		Mat mask;
+		cvtColor(hsv, mask, COLOR_HSV2BGR);
+		if (1)
+		{
+			imshow("qwq", realMask);
+			imshow("qaqqqwqwq", mask);
+			waitKey(0);
+		}
 		// erode the mask
-		erode(colorMask, erodeMask, Mat());
+		erode(realMask, erodeMask, Mat());
 		// find contours
     	findContours(erodeMask, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
 		// find nothing, car detection failed

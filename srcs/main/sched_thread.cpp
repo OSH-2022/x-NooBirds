@@ -2,9 +2,9 @@
 
 RVOScheduler::RVOScheduler() {
     this->sim = new RVO::RVOSimulator();
-    // setup agents TODO
     sim->setTimeStep(0.05f);
-    sim->setAgentDefaults(0,0,0,0,0,0);
+    // setup agents TODO
+    sim->setAgentDefaults(300.0f, 1, 10.0f, 10.0f, 300.0f, 10.0f);
     for (int i = 0; i < 3; i++) {
         sim->addAgent(RVO::Vector2(i * 200, 0));
         goals.push_back(RVO::Vector2(0, 0));

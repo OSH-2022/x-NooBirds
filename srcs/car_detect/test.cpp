@@ -7,7 +7,7 @@ using namespace std;
 using namespace cv;
 
 int main(int argc, const char** argv) {
-	Coordinate space(0);
+	Coordinate space(1);
 	printTime();
 	while (true) {
 		space.run();
