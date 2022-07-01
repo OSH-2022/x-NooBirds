@@ -11,4 +11,6 @@
 
 #include <mutex>
 
+#include <list>
+
 #endif // INCLUDES_H_
