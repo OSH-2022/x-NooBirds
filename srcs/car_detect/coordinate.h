@@ -17,10 +17,10 @@ public:
     Coordinate(int id);
     ~Coordinate();
 
-    const mutex& getMutex();
+    mutex& getMutex();
     const Package& getData();
-    
-    bool run();
+
+    bool run(bool fake=false);
 
 private:
     bool updateBase(const Mat &hsv);
