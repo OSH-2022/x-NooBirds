@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <string>
+#include <Windows.h>
 
 // sim_time unit: ms
 // distance unit: mm
@@ -14,8 +15,8 @@ const int adj_times = 10;
 #define OBJ_NUM       3
 
 #define PRINT_INTERVAL      200
-#define TIME_BET_SCHE 20
-#define SCHE_INTERVAL 1000
+#define TIME_BET_SCHE 30
+#define SCHE_INTERVAL 1400
 
 int is_adjust[OBJ_NUM] = {0};
 long double initial_vel[OBJ_NUM]; 
@@ -80,6 +81,10 @@ int sim_time = 0;
 enum traj {rect, cir, tri, playground, eight};
 traj obj_traj[OBJ_NUM];
 int obj_traj_seg[OBJ_NUM];
+
+int corner_case = 0;
+int critical_car[2] = {0};
+int slow_car = 0;
 
 void scheduler_1();
 void scheduler_2();
@@ -492,10 +497,10 @@ int main(int argc, char **argv) {
         }
 
         int ret = 0;
-        // ret = collision_detection();
+        ret = collision_detection();
         if (ret == 1) {
-            std::cout << "sim_time " << sim_time << "." << std::endl;
             // return 1;
+            // Sleep(1);
         }
     }
 
@@ -510,7 +515,7 @@ int collision_detection() {
         for (k = j + 1; k < OBJ_NUM; k++) {
             dist_sq = pow((obj_x[j] - obj_x[k]), 2) + pow((obj_y[j] - obj_y[k]), 2);
             if (dist_sq < pow((1.0 * (obj_radius[j] + obj_radius[k])), 2)) {
-                std::cout << "Car " << j << " collided with car " << k << " at sim_time " << sim_time << "!" << std::endl;
+                // std::cout << "Car " << j << " collided with car " << k << " at sim_time " << sim_time << "!" << std::endl;
                 return 1;
             }
         }
@@ -798,10 +803,18 @@ void scheduler_2() {
         vy_tmp[i] = obj_vy[i];
     }
 
+    // initial safety detection
     int ret = 0;
     for (j = 0; j < OBJ_NUM - 1; j++) {
         for (k = j + 1; k < OBJ_NUM; k++) {
-            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+            long double coe;
+            if (j == critical_car[0] && k == critical_car[1] && corner_case == 1) {
+                coe = 1.0;
+            }
+            else {
+                coe = safety_coe;
+            }
+            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
             if (ret == 1) {
                 need_adjust = 1;
                 break;
@@ -812,6 +825,9 @@ void scheduler_2() {
         }
     }
 
+    // if (j == 0 && k == 1) {
+    //     Sleep(1);
+    // }
     if (ret == 1) {
         int success = 0;
         for (i = 0; i < adj_times; i++) {
@@ -845,8 +861,21 @@ void scheduler_2() {
 
         if (success == 0) {
             adj_coe = 0.001;
-            adjusted_car = k;
-            is_adjust[k] = 1;
+            long double velocity_j = pow(obj_vx[j], 2) + pow(obj_vy[j], 2);
+            long double velocity_k = pow(obj_vx[k], 2) + pow(obj_vy[k], 2);
+            corner_case = 1;
+            critical_car[0] = j;
+            critical_car[1] = k;
+            if (velocity_j > velocity_k) {
+                adjusted_car = j;
+                is_adjust[j] = 1;
+                slow_car = k;
+            }
+            else {
+                adjusted_car = k;
+                is_adjust[k] = 1;
+                slow_car = j;
+            }
         }
     }
     else { // try to update
@@ -875,7 +904,13 @@ void scheduler_2() {
                 ret = 0;
                 for (j = 0; j < OBJ_NUM - 1; j++) {
                     for (k = j + 1; k < OBJ_NUM; k++) {
-                        long double coe = safety_coe + 2.0; //
+                        long double coe;
+                        if (l == slow_car && j == critical_car[0] && k == critical_car[1] && corner_case == 1) {
+                            coe = 1.0;
+                        }
+                        else {
+                            coe = safety_coe * 2.0;
+                        }
                         ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
                         if (ret == 1) {
                             break;
@@ -897,6 +932,9 @@ void scheduler_2() {
 
     if (need_adjust == 0) {
         if (need_update == 1) {
+            if (corner_case == 1 && (updated_car == critical_car[0] || updated_car == critical_car[1])) {
+                corner_case = 0;
+            }
             for (i = 0; i < OBJ_NUM; i++) {
                 if (i == updated_car) {
                     long double vel_angle;
