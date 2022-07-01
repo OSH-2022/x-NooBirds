@@ -23,7 +23,7 @@ def check_charset(file_path):
 
 def tfloat(string):
     if string[0] == '-':
-        string = string.replace('-', ' ')
+        string = string[1:]
         string.lstrip()
         return -float(string)
     else:
@@ -58,12 +58,12 @@ with open('.\\out.txt', encoding=check_charset('.\\out.txt')) as f:
             qwq = lines[:-2].split(' ')
         except Exception:
             pass
-        if cnt == 120:
-            time.sleep(3)
-            cnt = 0
-        else:
-            cnt = cnt + 1
-        print(cnt)
+        # if cnt == 120:
+        #     time.sleep(3)
+        #     cnt = 0
+        # else:
+        #     cnt = cnt + 1
+        # print(cnt)
         ax.clear()
         ax = plt.subplot(111, aspect = 'equal')
         plt.xlim(-20, 50)
@@ -93,5 +93,8 @@ with open('.\\out.txt', encoding=check_charset('.\\out.txt')) as f:
         ax.text(x3, y3, 2)
         plt.show()
         plt.pause(float(1/360))
+        if cnt == 0:
+            plt.pause(2)
+            cnt = cnt + 1
         x.clear()
         y.clear()
