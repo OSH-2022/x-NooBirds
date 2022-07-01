@@ -22,3 +22,5 @@ private:
     bool paraVld;
     double a, b;
 };
+
+#endif

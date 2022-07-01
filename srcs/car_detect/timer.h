@@ -10,6 +10,7 @@ public:
     int msec;
 
     AcrtTime();
+    AcrtTime(int min_, int sec_, int msec_);
     ~AcrtTime();
 
     void update();

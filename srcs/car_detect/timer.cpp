@@ -9,6 +9,12 @@ AcrtTime::AcrtTime() {
     msec = time.tv_usec / 1000;
 }
 
+AcrtTime::AcrtTime(int min_, int sec_, int msec_) {
+    min = min_;
+    sec = sec_;
+    msec = msec_;
+}
+
 AcrtTime::~AcrtTime() { }
 
 void AcrtTime::update() {
