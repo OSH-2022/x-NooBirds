@@ -2,12 +2,12 @@
 
 OBJS_DIR = obj
 
-SRCS = test.cpp detect_const.cpp timer.cpp coordinate.cpp
+SRCS = test.cpp detect_const.cpp timer.cpp coordinate.cpp process_predict.cpp
 
 OBJS = $(SRCS:%.cpp=$(OBJS_DIR)/%.o)
 
 CC = g++
-CC_FLAGS = -g -Wall -O3 `pkg-config --libs --cflags opencv4` -std=c++17
+CC_FLAGS = -g -Wall -O3 `pkg-config --libs --cflags opencv4` -std=c++17 -fsanitize=address
 INCLUDE =
 LINK = `pkg-config --libs --cflags opencv4`
 

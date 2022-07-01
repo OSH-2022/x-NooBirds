@@ -15,6 +15,7 @@ public:
 
     void print() const;
     void update();
+    AcrtTime mid(const AcrtTime &time) const;
 
     AcrtTime &operator=(const AcrtTime &time);
     int operator-(const AcrtTime &time) const;

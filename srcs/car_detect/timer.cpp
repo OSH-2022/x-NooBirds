@@ -17,8 +17,26 @@ AcrtTime::AcrtTime(int min_, int sec_, int msec_) {
 
 AcrtTime::~AcrtTime() { }
 
+AcrtTime AcrtTime::mid(const AcrtTime &time) const {
+    int delta = (time - *this) / 2;
+    AcrtTime rst = *this;
+    rst.msec += delta;
+    while (rst.msec >= 1000) {
+        rst.msec -= 1000;
+        rst.sec++;
+    }
+    while (rst.sec >= 60) {
+        rst.sec -= 60;
+        rst.min++;
+    }
+    while (rst.min >= 60) {
+        rst.min -= 60;
+    }
+    return rst;
+}
+
 void AcrtTime::print() const {
-    printf("min: %2ld, sec: %2ld, msec: %3ld\n", min, sec, msec);
+    printf("min: %2d, sec: %2d, msec: %3d\n", min, sec, msec);
 }
 
 void AcrtTime::update() {

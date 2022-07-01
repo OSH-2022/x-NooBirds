@@ -17,8 +17,13 @@ public:
     ~Predict();
 
 private:
-    list<AcrtTime> past;
-    list<double> process;
+    list<AcrtTime> midTime;
+    list<double> k;
+
+    bool lastVld;
+    AcrtTime lastTime;
+    double lastValue;
+
     bool paraVld;
     double a, b;
 };
