@@ -12,12 +12,12 @@ INCLUDE =
 LINK = `pkg-config --libs --cflags opencv4`
 
 .PHONY:default clean distclean test
-	
+
 default:test $(OBJS) Makefile
 	$(CC) $(CC_FLAGS) $(OBJS) -o demo $(LINK)
 	@echo "------ build ok ------"
-	
-test: 
+
+test:
 ifneq ($(OBJS_DIR), $(wildcard $(OBJS_DIR)))
 	@mkdir -p $(OBJS_DIR)
 endif
@@ -31,4 +31,4 @@ clean:
 
 distclean:clean
 	@rm -rf *.exe demo $(OBJS_DIR)
-    
+
