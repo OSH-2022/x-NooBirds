@@ -14,7 +14,7 @@
 
 const int N = 3;        // agent count
 
-sem_t Fresh, Mutex_pipe1;
+sem_t *Fresh, *Mutex_pipe1;
 
 AcrtTime tracker_time;
 RVO::Vector2 X[N];    // observed position of agent
@@ -44,15 +44,15 @@ void *thread_object_tracking(void *args) {
             int ms_elapsed = D.time - tracker_time;
             if (ms_elapsed <= 1) continue;
             tracker_time = D.time;
-            sem_wait(&Mutex_pipe1);
+            sem_wait(Mutex_pipe1);
             for (int i = 0; i < 3; i++) {
                 // TODO unit of time
                 RVO::Vector2 newX = RVO::Vector2(D.cars[i].x, D.cars[i].y);
                 V[i] = alpha * V[i] + (1-alpha) * (newX - X[i]) / ms_elapsed;
                 X[i] = newX;
             }
-            sem_post(&Fresh);
-            sem_post(&Mutex_pipe1);
+            sem_post(Fresh);
+            sem_post(Mutex_pipe1);
 #ifdef __DEBUG__
             printf("vx[0] = %lf\n", (double)V[0].x());
             D.time.print();
@@ -64,35 +64,45 @@ void *thread_object_tracking(void *args) {
 
 void *thread_sched_vel_factor(void *args) {
     ;
+    return NULL;
 }
 
 void *thread_sched_RVO2(void *args) {
-    PackageWithVel sched_data;
     RVOScheduler sched;
+
     std::vector<RVO::Vector2> goals;
     goals.push_back(RVO::Vector2(1, 0));
     goals.push_back(RVO::Vector2(2, 2));
     goals.push_back(RVO::Vector2(3, 3));
     sched.setGoal(goals);
+
+    PackageWithVel sched_data;
+
     while (true) {
-        sem_wait(&Fresh);
-        sem_wait(&Mutex_pipe1);
+        sem_wait(Fresh);
+        sem_wait(Mutex_pipe1);
         sched_data.time = tracker_time;
         for (int i = 0; i < 3; i++) {
             sched_data.cars[i] = X[i];
             sched_data.vels[i] = V[i];
         }
-        sem_post(&Mutex_pipe1);
+        sem_post(Mutex_pipe1);
         sched.setData(sched_data);
         sched.step();
-        sched.setData(sched.getNewData());
+        // sched.setData(sched.getNewData());
+        sched_data = sched.getNewData();
+        // TODO write new speed data to pipe, if ready
+#ifdef __DEBUG__
+        sched_data.time.print();
+        printf("new vx[0] = %lf\n", (double)sched_data.cars[0].x());
+#endif
     }
     return NULL;
 }
 
 // use some <ssh in subprocess> wizardry to control the car.
 struct remote_control {
-    int write_fds;
+    int write_fds = -1;
     std::string cmdline;
 } rctrl[3];
 
@@ -139,8 +149,12 @@ int main() {
     int res = 0;
     int total = -1;
     pthread_t pids[10];
-    sem_init(&Fresh, 0, 0);
-    sem_init(&Mutex_pipe1, 0, 1);
+
+    // Caveat: POSIX semaphores not implemented on macOS
+    // assert(sem_init(&Fresh, 0, 0) == 0);
+    // assert(sem_init(&Mutex_pipe1, 0, 1) == 0);
+    Fresh = sem_open("fresh", O_CREAT, 0644, 0);
+    Mutex_pipe1 = sem_open("pipe1", O_CREAT, 0644, 1);
 
     pthread_attr_t attr;
     struct sched_param param = {.sched_priority = 45};

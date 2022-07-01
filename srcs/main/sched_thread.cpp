@@ -31,6 +31,7 @@ void RVOScheduler::step() {
 
     {
         lock_guard<mutex> guard(newDataMutex);
+        newData.time.update();
         for (int i = 0; i < 3; ++i) {
             newData.cars[i] = sim->getAgentPosition(i);
             newData.vels[i] = sim->getAgentVelocity(i);
