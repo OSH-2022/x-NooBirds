@@ -17,6 +17,10 @@ AcrtTime::AcrtTime(int min_, int sec_, int msec_) {
 
 AcrtTime::~AcrtTime() { }
 
+void AcrtTime::print() const {
+    printf("min: %2ld, sec: %2ld, msec: %3ld\n", min, sec, msec);
+}
+
 void AcrtTime::update() {
     struct timeval time;
     gettimeofday(&time, NULL);
