@@ -3,5 +3,5 @@
 *.o
 *.a
 __pycache__/
-main
+src/main/main
 demo
