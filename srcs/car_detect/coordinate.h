@@ -10,6 +10,7 @@ using namespace cv;
 typedef struct DataPackage {
     AcrtTime time;
     Point cars[3];
+    vector<pair<Point, float>> dangerObj;
 } Package;
 
 class Coordinate {
@@ -24,12 +25,13 @@ public:
 
 private:
     bool updateBase(const Mat &hsv);
-    bool trackObject(const Mat &hsv, const AcrtTime &now);
+    bool trackObject(const Mat &hsv, const AcrtTime &now, const Mat &rgb);
 
     int count;
 
     VideoCapture cap;
     Mat convert;
+    Ptr<BackgroundSubtractorKNN> fgbg;
 
     mutex dataMutex;
     Package data;
