@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <mutex>
+#include <cmath>
 #include "../car_detect/coordinate.h"
 #include "../scheduler/schedulerRVO2/src/RVO.h"
 
@@ -89,6 +90,5 @@ private:
     int corner_case[OBJ_NUM][OBJ_NUM] = {0};
     int slow_car[OBJ_NUM][OBJ_NUM] = {0};
 
-    long double return_velocity_angle(int id, long double x, long double y, long double vx, long double vy);
     int unsafe_state_detector(int j, int k, long double jx, long double jy, long double jvx, long double jvy, long double kx, long double ky, long double kvx, long double kvy, long double coe);
 };

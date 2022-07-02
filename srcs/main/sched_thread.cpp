@@ -259,3 +259,58 @@ void HeuristicScheduler::schedule() {
         this->newData.vels[i] = RVO::Vector2(vx_tmp[i], vy_tmp[i]);
     }
 }
+
+int HeuristicScheduler::unsafe_state_detector(int j, int k, long double jx, long double jy, long double jvx, long double jvy, long double kx, long double ky, long double kvx, long double kvy, long double coe) {
+    long double vx_rel = jvx - kvx;
+    long double vy_rel = jvy - kvy;
+    long double x_rel = jx - kx;
+    long double y_rel = jy - ky;
+    long double x_rel_fin = (jx + jvx * SCHE_INTERVAL) - (kx + kvx * SCHE_INTERVAL);
+    long double y_rel_fin = (jy + jvy * SCHE_INTERVAL) - (ky + kvy * SCHE_INTERVAL);
+    long double dist_now = pow(x_rel, 2) + pow(y_rel, 2);
+    long double dist_fin = pow(x_rel_fin, 2) + pow(y_rel_fin, 2);
+    long double a = 0.0;
+    long double b = 0.0;
+    long double c = 0.0;
+    long double min_dist = 0.0; 
+    long double minimum_dist = 0.0;
+    long double dist_now_fin_min = (dist_now > dist_fin) ? dist_fin : dist_now;
+    if ((fabs(vx_rel) < 1e-6)) {
+        min_dist = fabs(x_rel);
+        if ((y_rel > 0 && y_rel_fin < 0) || (y_rel < 0 && y_rel_fin > 0)) {
+            minimum_dist = min_dist;
+        }
+        else {
+            minimum_dist = dist_now_fin_min;
+        }
+    }
+    else if (fabs(vy_rel) < 1e-6) {
+        min_dist = fabs(y_rel);
+        if ((x_rel > 0 && x_rel_fin < 0) || (x_rel < 0 && x_rel_fin > 0)) {
+            minimum_dist = min_dist;
+        }
+        else {
+            minimum_dist = dist_now_fin_min;
+        }
+    }
+    else {
+        a = -vy_rel / vx_rel;
+        b = 1.0;
+        c = -a * x_rel - b * y_rel;
+        min_dist = pow(c, 2) / (pow(a, 2) + 1.0);
+        long double y_per = (-c) / (pow(a, 2) + 1.0);
+        if ((y_per > y_rel && y_per < y_rel_fin) || (y_per < y_rel && y_per > y_rel_fin)) {
+            minimum_dist = min_dist;
+        }
+        else {
+            minimum_dist = dist_now_fin_min;
+        }
+    }
+
+    if (minimum_dist < pow((coe * (obj_radius[j] + obj_radius[k])), 2)) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
