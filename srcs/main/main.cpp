@@ -21,7 +21,10 @@ sem_t *Fresh, *Mutex_pipe1;
 
 AcrtTime tracker_time;
 RVO::Vector2 X[N];    // observed position of agent
+RVO::Vector2 pastX[N][9];
+AcrtTime pastT[N][9];
 RVO::Vector2 V[N];    // observed velocity of agent
+double v_on_car[N];
 
 struct remote_control {
     int write_fds = -1;
@@ -34,7 +37,8 @@ void *thread_object_tracking(void *args) {
     Coordinate &tracker = *(Coordinate *)args;
     mutex &M = tracker.getMutex();
     const Package &D = tracker.getData();
-    Predict pV[3][2], pX[3][2];
+    Predict pX[3][2];
+    // Predict pV[3][2];
 
     {
         lock_guard<mutex> guard(M);
@@ -43,7 +47,7 @@ void *thread_object_tracking(void *args) {
             V[i] = RVO::Vector2(0, 0);
         }
     }
-    const long double alpha = 0.5;      // speed inertia
+    const long double alpha = 0.8;      // speed inertia
     while (true) {
         const bool use_fake_data = false;
         bool has_new_data = tracker.run(use_fake_data);
@@ -56,23 +60,40 @@ void *thread_object_tracking(void *args) {
             sem_wait(Mutex_pipe1);
             for (int i = 0; i < 3; i++) {
                 // TODO unit of time
-                V[i] = RVO::Vector2(pV[i][0].predict(D.time), pV[i][1].predict(D.time));
-                X[i] = RVO::Vector2(pX[i][0].predict(D.time), pX[i][1].predict(D.time));
 
-                RVO::Vector2 newX = RVO::Vector2(D.cars[i].x, D.cars[i].y);
-                pX[i][0].push(D.time, newX.x());
-                pX[i][1].push(D.time, newX.y());
+                X[i] = RVO::Vector2(pX[i][0].predict(D.time), pX[i][1].predict(D.time));
+                pastX[i][0] = pastX[i][1];
+                pastX[i][1] = pastX[i][2];
+                pastX[i][2] = pastX[i][3];
+                pastX[i][3] = pastX[i][4];
+                pastX[i][4] = pastX[i][5];
+                pastX[i][5] = pastX[i][6];
+                pastX[i][6] = pastX[i][7];
+                pastX[i][7] = pastX[i][8];
+                pastX[i][8] = X[i];
+
+                pastT[i][0] = pastT[i][1];
+                pastT[i][1] = pastT[i][2];
+                pastT[i][2] = pastT[i][3];
+                pastT[i][3] = pastT[i][4];
+                pastT[i][4] = pastT[i][5];
+                pastT[i][5] = pastT[i][6];
+                pastT[i][6] = pastT[i][7];
+                pastT[i][7] = pastT[i][8];
+                pastT[i][8] = D.time;
+
+                V[i] = 1.00 / 4 * (
+                    (pastX[i][8] - pastX[i][3]) / (pastT[i][8] - pastT[i][3])
+                  + (pastX[i][7] - pastX[i][2]) / (pastT[i][7] - pastT[i][2])
+                  + (pastX[i][6] - pastX[i][1]) / (pastT[i][6] - pastT[i][1])
+                  + (pastX[i][5] - pastX[i][0]) / (pastT[i][5] - pastT[i][0])
+                ) * 1000;
+
+                pX[i][0].push(D.time, D.cars[i].x);
+                pX[i][1].push(D.time, D.cars[i].y);
 
                 // TODO obtain vel directly from the predicted slope of X
                 // ASSIGNED TO: yyk
-                RVO::Vector2 newV = (newX - X[i]) / ms_elapsed * 1000;
-                pV[i][0].push(D.time, newV.x());
-                pV[i][1].push(D.time, newV.y());
-
-                // X[i] = alpha * X[i] + (1-alpha) * newX;
-                // V[i] = alpha * V[i] + (1-alpha) * newV;
-                // X[i] = RVO::Vector2(pX[i][0].predict(tracker_time), pX[i][1].predict(tracker_time));
-                // V[i] = RVO::Vector2(pV[i][0].predict(tracker_time), pV[i][1].predict(tracker_time));
             }
             tracker_time = D.time;
             sem_post(Fresh);
@@ -84,7 +105,8 @@ void *thread_object_tracking(void *args) {
             // printf("v[2] = [%7.2lf, %+7.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[2]), (double)(V[2].y() / V[2].x()), (double)V[2].x(), (double)V[2].y());
 
             // print CSV (x, y, vel)
-            printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
+            // printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
+            printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[1].x(), (double)X[1].y(), (double)RVO::abs(V[1]));
 
             // print position pairs
             // for (int i = 0; i < 1; i++)
@@ -107,11 +129,35 @@ void *thread_sched_RVO2(void *args) {
     RVOScheduler sched;
 
     std::vector<RVO::Vector2> goals;
-    goals.push_back(RVO::Vector2(50, 350));
-    goals.push_back(RVO::Vector2(390, 340));
-    goals.push_back(RVO::Vector2(40, 40));
+    // goals.push_back(RVO::Vector2(200, 200));
+    goals.push_back(RVO::Vector2(300, 300));
+    goals.push_back(RVO::Vector2(100, 100));
+    goals.push_back(RVO::Vector2(0, 0));
     sched.setGoal(goals);
-    RVO::Vector2 gg(350, 50);
+    // v_on_car[0] = 0.5;
+    // v_on_car[1] = 0.5;
+    // v_on_car[2] = 0.5;
+
+    // 8-shape
+    std::vector<RVO::Vector2> ggs[3];
+    int which[3] = {0, 0, 0};
+    ggs[1].push_back(RVO::Vector2(100, 100));
+    ggs[1].push_back(RVO::Vector2(120, 250));
+    ggs[1].push_back(RVO::Vector2(350, 350));
+    ggs[1].push_back(RVO::Vector2(-1, -1));
+
+    ggs[0].push_back(RVO::Vector2(300, 300));
+    ggs[0].push_back(RVO::Vector2(220, 150));
+    ggs[0].push_back(RVO::Vector2( 50,  50));
+    ggs[0].push_back(RVO::Vector2(-1, -1));
+
+    // int which = 0;
+    // ggs.push_back(RVO::Vector2(200, 200));
+    // ggs.push_back(RVO::Vector2( 70, 250));
+    // ggs.push_back(RVO::Vector2(150, 330));
+    // ggs.push_back(RVO::Vector2(200, 200));
+    // ggs.push_back(RVO::Vector2(250,  70));
+    // ggs.push_back(RVO::Vector2(330, 150));
 
     PackageWithVel sched_data, pilot_data;
 
@@ -151,19 +197,36 @@ void *thread_sched_RVO2(void *args) {
                 asinf(
                     (v1.x() * v0.y() - v1.y() * v0.x())
                     / (RVO::abs(v1) * RVO::abs(v0))
-                ) * 2 / 3.1416;
+                );
+            if (delta_angle > 0.9) delta_angle = 0.9;
+            if (delta_angle < -0.9) delta_angle = -0.9;
             // printf("delta angle = %+6.4lf\n", (double)delta_angle);
             if (isnan(delta_angle)) delta_angle = 0.00;
+            delta_speed = 0.7;
             // delta_speed = RVO::abs(v1) / RVO::abs(v0);
-            delta_speed = 0.5;
-            double dist = RVO::abs(pilot_data.cars[i] - goals[i]);
-            if (dist < 70) {
+            // if (isnan(delta_speed)) delta_speed = 1.00;
+            // v_on_car[i] *= delta_speed;≥
+            // v_on_car[i] = min(v_on_car[i], 0.5);
+            double dist = RVO::abs(sched_data.cars[i] - goals[i]);
+            if (i == 1)
+                printf("pink dist: %lf\n", dist);
+            if (which[i] == ggs[i].size() - 1) {
                 delta_speed = 0;
-                std::swap(goals[i], gg);
+                delta_angle = 0.00;
+            }
+            if (dist < 40) {
+                delta_speed = 0;
+                if (which[i] < ggs[i].size() - 1) {
+                    ++which[i];
+                    goals[i] = ggs[i][which[i]];
+                }
                 std::cerr << "swap goal!\n";
             }
+            std::cout << goals[0] << " " << goals[1] << " " << goals[2] << std::endl;
             int buflen
+                // = sprintf(buf, "%f %f\n", delta_angle, (float)v_on_car[i]);
                 = sprintf(buf, "%f %f\n", delta_angle, delta_speed);
+            // printf("suggested V = %lf\n", v_on_car[i]);
             int pos = 0;
             while (pos < buflen)
                 pos += write(rctrl[i].write_fds, buf + pos, buflen - pos);
@@ -248,24 +311,23 @@ int main() {
 
 // /*
     // Coordinate tracker(-1);
-    Coordinate tracker(1);
+    Coordinate tracker(0);
     res = pthread_create(&pids[++total], &attr, thread_object_tracking, &tracker);
     assert(!res);
     res = pthread_create(&pids[++total], &attr, thread_sched_RVO2, NULL);
     assert(!res);
 // */
 
-    // rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
-    // rctrl[yellow - 1].cmdline = "sleep 10000";
+    rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
+    rctrl[pink   - 1].cmdline = "ssh -t -t pi@192.168.43.167 /home/pi/startup.sh";
     rctrl[green  - 1].cmdline = "ssh -t -t pi@172.20.10.13";
-    rctrl[pink   - 1].cmdline = "ls";
 
     res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+0);
     assert(!res);
-
-/*
     res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+1);
     assert(!res);
+
+/*
     // res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+2);
     // assert(!res);
 */

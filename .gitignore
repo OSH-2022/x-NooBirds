@@ -3,5 +3,6 @@
 *.o
 *.a
 __pycache__/
-src/main/main
+srcs/main/main
+*.dSYM
 demo

@@ -4,12 +4,53 @@ RVOScheduler::RVOScheduler() {
     this->sim = new RVO::RVOSimulator();
     sim->setTimeStep(0.05f);
     // setup agents TODO
-    // sim->setAgentDefaults(300.0f, 1, 10.0f, 10.0f, 300.0f, 10.0f);
-    sim->setAgentDefaults(300.0f, 2, 10.0f, 10.0f, 50.0f, 160.0f);
+    // sim->setAgentDefaults(300.0f, 1, 10.0f, 10.0f, 300.0f, 100.0f);
+    // sim->setAgentDefaults(300.0f, 2, 1.0f, 1.0f, 50.0f, 160.0f);
+    // sim->setAgentDefaults(300.0f, 2, 0.1f, 0.1f, 150.0f, 160.0f);
+    // sim->setAgentDefaults(300.0f, 1, 0.1f, 0.1f, 150.0f, 160.0f);
+    //xyy
+    sim->setAgentDefaults(50.0f, 1, 0.1f, 0.1f, 50.0f, 160.0f);
+
     for (int i = 0; i < 3; i++) {
         sim->addAgent(RVO::Vector2(i * 200, 0));
         goals.push_back(RVO::Vector2(0, 0));
     }
+
+    std::vector<RVO::Vector2> vertices;
+    vertices.push_back(RVO::Vector2(30.0f, -30.0f));
+    vertices.push_back(RVO::Vector2(30.0f, 430.0f));
+    vertices.push_back(RVO::Vector2(-30.0f, 430.0f));
+    vertices.push_back(RVO::Vector2(-30.0f, -30.0f));
+    sim->addObstacle(vertices);
+
+    vertices.clear();
+    vertices.push_back(RVO::Vector2(430.0f, -30.0f));
+    vertices.push_back(RVO::Vector2(430.0f, 430.0f));
+    vertices.push_back(RVO::Vector2(370.0f, 430.0f));
+    vertices.push_back(RVO::Vector2(370.0f, -30.0f));
+    sim->addObstacle(vertices);
+
+    vertices.clear();
+    vertices.push_back(RVO::Vector2(-30.0f, -30.0f));
+    vertices.push_back(RVO::Vector2(430.0f, -30.0f));
+    vertices.push_back(RVO::Vector2(430.0f, 30.0f));
+    vertices.push_back(RVO::Vector2(-30.0f, 30.0f));
+    sim->addObstacle(vertices);
+
+    vertices.clear();
+    vertices.push_back(RVO::Vector2(-30.0f, 370.0f));
+    vertices.push_back(RVO::Vector2(430.0f, 370.0f));
+    vertices.push_back(RVO::Vector2(430.0f, 430.0f));
+    vertices.push_back(RVO::Vector2(-30.0f, 430.0f));
+    sim->addObstacle(vertices);
+
+    // vertices.clear();
+    // vertices.push_back(RVO::Vector2(200.0f, 100.0f));
+    // vertices.push_back(RVO::Vector2(210.0f, 100.0f));
+    // vertices.push_back(RVO::Vector2(200.0f, 110.0f));
+    // sim->addObstacle(vertices);
+
+    sim->processObstacles();
 }
 
 mutex &RVOScheduler::getNewDataMutex() {

@@ -83,9 +83,11 @@ bool Coordinate::run(bool fake) {
 	// conveter BGR to HSV
     cvtColor(gsFrame, hsv, COLOR_BGR2HSV);
 
+	/* Caveat: updateBase() introduces greater jitter
 	if (!(count & 15)) {
 		rst = updateBase(hsv) && rst;
 	}
+	*/
 
 	return trackObject(hsv, time) && rst;
 }
