@@ -20,11 +20,11 @@ using namespace cv;
 #define YELLOW_LOWER_LIMIT Scalar( 15,  50, 110)
 #define YELLOW_UPPER_LIMIT Scalar( 35, 255, 255)
 
-#define GREEN_LOWER_LIMIT  Scalar( 45,  30,   0)
-#define GREEN_UPPER_LIMIT  Scalar( 71, 255, 255)
-
 #define PINK_LOWER_LIMIT   Scalar(142,   0,   0)
 #define PINK_UPPER_LIMIT   Scalar(169, 255, 255)
+
+#define GREEN_LOWER_LIMIT  Scalar( 45,  30,   0)
+#define GREEN_UPPER_LIMIT  Scalar( 71, 255, 255)
 
 // #define BLUE_LOWER_LIMIT   Scalar( 75,  50,   0)
 // #define BLUE_UPPER_LIMIT   Scalar(100, 255, 255)
@@ -35,12 +35,12 @@ using namespace cv;
 
 #define MIN_ACCEPT_RADIUS 8
 
-enum color_t {red, yellow, green, pink};
+enum color_t {red, yellow, pink, green};
 
 Mat isRed(const Mat &src);
 Mat isYellow(const Mat &src);
-Mat isGreen(const Mat &src);
 Mat isPink(const Mat &src);
+Mat isGreen(const Mat &src);
 
 Mat isColor(const Mat &src, color_t color);
 
