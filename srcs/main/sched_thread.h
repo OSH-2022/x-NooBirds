@@ -60,8 +60,8 @@ private:
     PackageWithVel data, newData;
 
     int is_adjust[OBJ_NUM] = {0};
-    long double initial_vel[OBJ_NUM] = {0};
-    long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
+    long double initial_vel[OBJ_NUM] = {0.6, 0.6, 0.6};
+    long double obj_radius[OBJ_NUM] = {30.0, 30.0, 30.0};
     long double safety_coe = 1.5;
 
     long double corner_radius = 200.0;
