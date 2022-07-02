@@ -56,17 +56,23 @@ void *thread_object_tracking(void *args) {
             sem_wait(Mutex_pipe1);
             for (int i = 0; i < 3; i++) {
                 // TODO unit of time
+                V[i] = RVO::Vector2(pV[i][0].predict(D.time), pV[i][1].predict(D.time));
+                X[i] = RVO::Vector2(pX[i][0].predict(D.time), pX[i][1].predict(D.time));
+
                 RVO::Vector2 newX = RVO::Vector2(D.cars[i].x, D.cars[i].y);
                 pX[i][0].push(D.time, newX.x());
                 pX[i][1].push(D.time, newX.y());
-                X[i] = RVO::Vector2(pX[i][0].predict(tracker_time), pX[i][1].predict(tracker_time));
 
+                // TODO obtain vel directly from the predicted slope of X
+                // ASSIGNED TO: yyk
                 RVO::Vector2 newV = (newX - X[i]) / ms_elapsed * 1000;
                 pV[i][0].push(D.time, newV.x());
                 pV[i][1].push(D.time, newV.y());
+
                 // X[i] = alpha * X[i] + (1-alpha) * newX;
                 // V[i] = alpha * V[i] + (1-alpha) * newV;
-                V[i] = RVO::Vector2(pV[i][0].predict(tracker_time), pV[i][1].predict(tracker_time));
+                // X[i] = RVO::Vector2(pX[i][0].predict(tracker_time), pX[i][1].predict(tracker_time));
+                // V[i] = RVO::Vector2(pV[i][0].predict(tracker_time), pV[i][1].predict(tracker_time));
             }
             tracker_time = D.time;
             sem_post(Fresh);
@@ -133,7 +139,6 @@ void *thread_sched_RVO2(void *args) {
         }
         // sched.setData(pilot_data);
 
-        // TODO write new speed data to pipe, if ready
         char buf[1024];
         float delta_angle, delta_speed;
         for (int i = 0; i < 3; i++) {
@@ -250,7 +255,7 @@ int main() {
     assert(!res);
 // */
 
-    rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
+    // rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
     // rctrl[yellow - 1].cmdline = "sleep 10000";
     rctrl[green  - 1].cmdline = "ssh -t -t pi@172.20.10.13";
     rctrl[pink   - 1].cmdline = "ls";

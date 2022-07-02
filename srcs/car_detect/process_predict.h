@@ -4,7 +4,7 @@
 #include "includes.h"
 #include "timer.h"
 
-#define HISTORY_LENGTH 20
+#define HISTORY_LENGTH 15
 
 using namespace std;
 

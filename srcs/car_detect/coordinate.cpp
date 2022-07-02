@@ -179,13 +179,12 @@ bool Coordinate::trackObject(const Mat &hsv, const AcrtTime &now) {
 	Point2f rectPoints[4];
 
 	for (int color = yellow; color <= pink; ++color) {
-	// for (int color = yellow; color <= yellow; ++color) {
 		colorMask = isColor(hsv, (color_t)color);
 		// convert perspective
 		warpPerspective(colorMask, realMask, convert, Size(REAL, REAL));
 		Mat mask;
 		cvtColor(hsv, mask, COLOR_HSV2BGR);
-		if (1)
+		if (0)
 		{
 			imshow("qwq", realMask);
 			imshow("qaqqqwqwq", mask);

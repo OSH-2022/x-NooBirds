@@ -272,7 +272,7 @@ int HeuristicScheduler::unsafe_state_detector(int j, int k, long double jx, long
     long double a = 0.0;
     long double b = 0.0;
     long double c = 0.0;
-    long double min_dist = 0.0; 
+    long double min_dist = 0.0;
     long double minimum_dist = 0.0;
     long double dist_now_fin_min = (dist_now > dist_fin) ? dist_fin : dist_now;
     if ((fabs(vx_rel) < 1e-6)) {
