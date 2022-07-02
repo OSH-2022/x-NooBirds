@@ -62,24 +62,24 @@ private:
     int is_adjust[OBJ_NUM] = {0};
     long double initial_vel[OBJ_NUM] = {0.6, 0.6, 0.6};
     long double obj_radius[OBJ_NUM] = {30.0, 30.0, 30.0};
-    long double safety_coe = 1.5;
+    long double safety_coe = 2.0;
 
-    long double corner_radius = 200.0;
+    // long double corner_radius = 200.0;
 
-    long double rect_center[2] = {0.0, 0.0};
-    long double rect_len = 1000.0;
+    // long double rect_center[2] = {0.0, 0.0};
+    // long double rect_len = 1000.0;
 
-    long double cir_center[2] = {0.0, 0.0};
-    long double cir_radius = 1200.0;
+    // long double cir_center[2] = {0.0, 0.0};
+    // long double cir_radius = 1200.0;
 
-    long double tri_center[2];
-    long double tri_len;
+    // long double tri_center[2];
+    // long double tri_len;
 
-    long double eight_center[2] = {0.0};
-    long double eight_len = 1400.0;
-    long double eight_radius = 1400.0;
+    // long double eight_center[2] = {0.0};
+    // long double eight_len = 1400.0;
+    // long double eight_radius = 1400.0;
 
-    long double vel_angle[OBJ_NUM]; // TO BE DONE: Return the angles of velocity vetors at a given point and a given direction
+    // long double vel_angle[OBJ_NUM]; // TO BE DONE: Return the angles of velocity vetors at a given point and a given direction
 
     int direction[OBJ_NUM] = {CLOCKWISE};
 

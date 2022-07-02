@@ -94,12 +94,22 @@ void HeuristicScheduler::schedule() {
     int need_adjust = 0;
     int need_update = 0;
     int ret = 0;
+    long double vel_angle[i] = {0.0};
 
     for (i = 0; i < OBJ_NUM; i++) {
         x_tmp[i] = this->data.cars[i].x();
         y_tmp[i] = this->data.cars[i].y();
         vx_tmp[i] = this->data.vels[i].x();
         vy_tmp[i] = this->data.vels[i].y();
+    }
+
+    for (i = 0; i < OBJ_NUM; i++) {
+        if (vx_tmp[i] > 0) {
+            angle[i] = atan(vy_tmp[i] / vx_tmp[i]);
+        }
+        else if (vy_tmp[i] > 0) {
+            angle[i] = pi + atan(vy_tmp[i] / vx_tmp[i]);
+        }
     }
 
     do {
