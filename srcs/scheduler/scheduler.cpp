@@ -19,7 +19,7 @@ const int adj_times = 10;
 #define SCHE_INTERVAL       1400
 
 int is_adjust[OBJ_NUM] = {0};
-long double initial_vel[OBJ_NUM]; 
+long double initial_vel[OBJ_NUM];
 // used by scheduler 1
 // #define RATIO         5
 // used by scheduler 1
@@ -95,7 +95,7 @@ long double return_velocity_angle(int id);
 int unsafe_state_detector(int j, int k, long double jx, long double jy, long double jvx, long double jvy, long double kx, long double ky, long double kvx, long double kvy, long double coe);
 
 int main(int argc, char **argv) {
-    obj_x[0] = eight_center[0]; 
+    obj_x[0] = eight_center[0];
     obj_y[0] = eight_center[1] - eight_len;
     initial_vel[0] = 0.3;
     obj_vx[0] = 0.0;
@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
                             obj_x[i] = cir_center[0] + sin(pi / 3) * corner_radius + deviation / 2;
                             obj_y[i] = cir_center[1] + tri_len + corner_radius / 2 - deviation * sin(pi / 3);
                             obj_vx[i] = velocity_total / 2;
-                            obj_vy[i] = -velocity_total * sin(pi / 3); 
+                            obj_vy[i] = -velocity_total * sin(pi / 3);
                         }
                         else {
                             angle[i] = angle[i] - velocity_total / corner_radius;
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
                     break;
                 }
             case playground:
-                
+
                 break;
             case eight:
                 switch (obj_traj_seg[i]) {
@@ -625,7 +625,7 @@ int collision_detection() {
 //                             long double j_y = obj_y_initial[j];
 //                             long double k_x = obj_x_initial[k];
 //                             long double k_y = obj_y_initial[k];
-                            
+
 //                             long double j_vx = obj_vx_initial[j];
 //                             long double j_vy = obj_vy_initial[j];
 //                             long double k_vx = adj_coe * obj_vx_initial[k];
@@ -795,7 +795,7 @@ void scheduler_2() {
     int need_update = 0;
     int need_adjust_total = 0;
     int ret = 0;
-    
+
     // if (sim_time == 43260) {
     //     Sleep(1);
     // }
@@ -976,7 +976,7 @@ void scheduler_2() {
             //     // else {
             //     //     adjusted_car = j;
             //     //     is_adjust[j] = 1;
-            //     //     slow_car[j][k] = k; 
+            //     //     slow_car[j][k] = k;
             //     // }
             }
         }
@@ -1185,7 +1185,7 @@ int unsafe_state_detector(int j, int k, long double jx, long double jy, long dou
     long double a = 0.0;
     long double b = 0.0;
     long double c = 0.0;
-    long double min_dist = 0.0; 
+    long double min_dist = 0.0;
     long double minimum_dist = 0.0;
     long double dist_now_fin_min = (dist_now > dist_fin) ? dist_fin : dist_now;
     if ((fabs(vx_rel) < 1e-6)) {

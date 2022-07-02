@@ -26,11 +26,6 @@ using namespace cv;
 #define GREEN_LOWER_LIMIT  Scalar( 45,  30,   0)
 #define GREEN_UPPER_LIMIT  Scalar( 71, 255, 255)
 
-// #define BLUE_LOWER_LIMIT   Scalar( 75,  50,   0)
-// #define BLUE_UPPER_LIMIT   Scalar(100, 255, 255)
-// #define BLUE_LOWER_LIMIT   Scalar( 87,  70, 112)
-// #define BLUE_UPPER_LIMIT   Scalar(100, 255, 255)
-
 #define REAL 400
 
 #define MIN_ACCEPT_RADIUS 8
