@@ -8,7 +8,7 @@ const long double pi = 3.14159265358979323846;
 const long double adj_step_size = 0.097;
 const int adj_times = 10;
 
-#define OBJ_NUM       3
+#define OBJ_NUM             3
 #define PRINT_INTERVAL      2000
 #define TIME_BET_SCHE       30
 #define SCHE_INTERVAL       1400
@@ -89,6 +89,6 @@ private:
     int corner_case[OBJ_NUM][OBJ_NUM] = {0};
     int slow_car[OBJ_NUM][OBJ_NUM] = {0};
 
-    long double return_velocity_angle(int id long double x, long double y, long double vx, long double vy);
+    long double return_velocity_angle(int id, long double x, long double y, long double vx, long double vy);
     int unsafe_state_detector(int j, int k, long double jx, long double jy, long double jvx, long double jvy, long double kx, long double ky, long double kvx, long double kvy, long double coe);
-    }
+};

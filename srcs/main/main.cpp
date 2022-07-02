@@ -8,7 +8,9 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include "../car_detect/detect_const.h"
 #include "../car_detect/coordinate.h"
+#include "../car_detect/process_predict.h"
 #include "sched_thread.h"
 
 #define __DEBUG__
@@ -32,6 +34,7 @@ void *thread_object_tracking(void *args) {
     Coordinate &tracker = *(Coordinate *)args;
     mutex &M = tracker.getMutex();
     const Package &D = tracker.getData();
+    Predict pV[3][2], pX[3][2];
 
     {
         lock_guard<mutex> guard(M);
@@ -47,30 +50,39 @@ void *thread_object_tracking(void *args) {
 
         // update velocity
         if (has_new_data) {
-            // TODO use a more sophisticated algorithm to determine speed
-            // ASSIGNED TO: yyk
-
             int ms_elapsed = D.time - tracker_time;
-            if (ms_elapsed <= 1) continue;
-            tracker_time = D.time;
+            // std::cerr << ms_elapsed << std::endl;
+            if (ms_elapsed <= 20) continue;
             sem_wait(Mutex_pipe1);
             for (int i = 0; i < 3; i++) {
                 // TODO unit of time
                 RVO::Vector2 newX = RVO::Vector2(D.cars[i].x, D.cars[i].y);
-                V[i] = alpha * V[i] + (1-alpha) * (newX - X[i]) / ms_elapsed * 1000;
-                X[i] = alpha * X[i] + (1-alpha) * newX;
+                pX[i][0].push(D.time, newX.x());
+                pX[i][1].push(D.time, newX.y());
+                X[i] = RVO::Vector2(pX[i][0].predict(tracker_time), pX[i][1].predict(tracker_time));
+
+                RVO::Vector2 newV = (newX - X[i]) / ms_elapsed * 1000;
+                pV[i][0].push(D.time, newV.x());
+                pV[i][1].push(D.time, newV.y());
+                // X[i] = alpha * X[i] + (1-alpha) * newX;
+                // V[i] = alpha * V[i] + (1-alpha) * newV;
+                V[i] = RVO::Vector2(pV[i][0].predict(tracker_time), pV[i][1].predict(tracker_time));
             }
+            tracker_time = D.time;
             sem_post(Fresh);
             sem_post(Mutex_pipe1);
 #ifdef __DEBUG__
             // print velocity in polar and cartesian coordinates
-            // printf("v[0] = [%+6.2lf, %+6.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[0]), (double)(V[0].y() / V[0].x()), (double)V[0].x(), (double)V[0].y());
+            // printf("v[0] = [%7.2lf, %+7.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[0]), (double)(V[0].y() / V[0].x()), (double)V[0].x(), (double)V[0].y());
+            // printf("v[1] = [%7.2lf, %+7.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[1]), (double)(V[1].y() / V[1].x()), (double)V[1].x(), (double)V[1].y());
+            // printf("v[2] = [%7.2lf, %+7.2lf]: (%.2lf, %.2lf)\n", (double)RVO::abs(V[2]), (double)(V[2].y() / V[2].x()), (double)V[2].x(), (double)V[2].y());
 
             // print CSV (x, y, vel)
-            // printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
+            printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
 
             // print position pairs
-            // printf("x[0] = (%.2lf, %.2lf)\n", (double)X[0].x(), (double)X[0].y());
+            // for (int i = 0; i < 1; i++)
+            //     printf("x[%d] = (%.2lf, %.2lf)\n", i, (double)X[i].x(), (double)X[i].y());
 
             // print time
             // D.time.print();
@@ -135,7 +147,7 @@ void *thread_sched_RVO2(void *args) {
                     (v1.x() * v0.y() - v1.y() * v0.x())
                     / (RVO::abs(v1) * RVO::abs(v0))
                 ) * 2 / 3.1416;
-            printf("delta angle = %+6.4lf\n", (double)delta_angle);
+            // printf("delta angle = %+6.4lf\n", (double)delta_angle);
             if (isnan(delta_angle)) delta_angle = 0.00;
             // delta_speed = RVO::abs(v1) / RVO::abs(v0);
             delta_speed = 0.5;
@@ -238,10 +250,10 @@ int main() {
     assert(!res);
 // */
 
-    // rctrl[0].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
-    rctrl[0].cmdline = "ssh -t -t pi@192.168.43.167 /home/pi/startup.sh";
-    rctrl[1].cmdline = "ssh -t -t pi@172.20.10.13";
-    rctrl[2].cmdline = "ls";
+    rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
+    // rctrl[yellow - 1].cmdline = "sleep 10000";
+    rctrl[green  - 1].cmdline = "ssh -t -t pi@172.20.10.13";
+    rctrl[pink   - 1].cmdline = "ls";
 
     res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+0);
     assert(!res);

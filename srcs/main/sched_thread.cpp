@@ -4,7 +4,8 @@ RVOScheduler::RVOScheduler() {
     this->sim = new RVO::RVOSimulator();
     sim->setTimeStep(0.05f);
     // setup agents TODO
-    sim->setAgentDefaults(300.0f, 1, 10.0f, 10.0f, 300.0f, 10.0f);
+    // sim->setAgentDefaults(300.0f, 1, 10.0f, 10.0f, 300.0f, 10.0f);
+    sim->setAgentDefaults(300.0f, 2, 10.0f, 10.0f, 50.0f, 160.0f);
     for (int i = 0; i < 3; i++) {
         sim->addAgent(RVO::Vector2(i * 200, 0));
         goals.push_back(RVO::Vector2(0, 0));
@@ -60,7 +61,7 @@ HeuristicScheduler::HeuristicScheduler() {
     ;
 }
 
-HeuristicScheduler::~RVOScheduler() {
+HeuristicScheduler::~HeuristicScheduler() {
     ;
 }
 
@@ -255,7 +256,6 @@ void HeuristicScheduler::schedule() {
     while (need_update == 1);
 
     for (i = 0; i < OBJ_NUM; i++) {
-        this->newData.vels[i].x_ = vx_tmp[i];
-        this->newData.vels[i].y_ = vy_tmp[i];
+        this->newData.vels[i] = RVO::Vector2(vx_tmp[i], vy_tmp[i]);
     }
 }
