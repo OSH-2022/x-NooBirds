@@ -4,7 +4,7 @@
 #include "includes.h"
 #include "timer.h"
 
-#define HISTORY_LENGTH 5
+#define HISTORY_LENGTH 20
 
 using namespace std;
 
@@ -12,11 +12,12 @@ class Predict {
 public:
     Predict();
     void push(const AcrtTime &time, double value);
-    void updatePara();
     double predict(const AcrtTime &future);
     ~Predict();
 
 private:
+    void updatePara();
+
     list<AcrtTime> midTime;
     list<double> k;
 
