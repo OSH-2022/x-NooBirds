@@ -28,7 +28,7 @@ class SSHReceiver:
         orig_fl = fcntl.fcntl(sys.stdin, fcntl.F_GETFL)
         fcntl.fcntl(sys.stdin, fcntl.F_SETFL, orig_fl | os.O_NONBLOCK)
         self.auto_angle_delta = 0.00
-        self.auto_speed_alpha = 1.00
+        self.auto_speed_alpha = 0.60
         # set up stdin select for async IO
         self.sel = selectors.DefaultSelector()
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.got_keyboard_data)
