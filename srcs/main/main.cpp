@@ -24,7 +24,7 @@ RVO::Vector2 X[N];    // observed position of agent
 RVO::Vector2 pastX[N][9];
 AcrtTime pastT[N][9];
 RVO::Vector2 V[N];    // observed velocity of agent
-double v_on_car[N];
+double v_on_car[N] = {0.6, 0.6, 0.6};
 
 struct remote_control {
     int write_fds = -1;
@@ -62,6 +62,9 @@ void *thread_object_tracking(void *args) {
                 // TODO unit of time
 
                 X[i] = RVO::Vector2(pX[i][0].predict(D.time), pX[i][1].predict(D.time));
+                // V[i] = RVO::Vector2(pX[i][0].predictK(D.time), pX[i][1].predictK(D.time));
+
+                // /*
                 pastX[i][0] = pastX[i][1];
                 pastX[i][1] = pastX[i][2];
                 pastX[i][2] = pastX[i][3];
@@ -88,12 +91,10 @@ void *thread_object_tracking(void *args) {
                   + (pastX[i][6] - pastX[i][1]) / (pastT[i][6] - pastT[i][1])
                   + (pastX[i][5] - pastX[i][0]) / (pastT[i][5] - pastT[i][0])
                 ) * 1000;
+                // */
 
                 pX[i][0].push(D.time, D.cars[i].x);
                 pX[i][1].push(D.time, D.cars[i].y);
-
-                // TODO obtain vel directly from the predicted slope of X
-                // ASSIGNED TO: yyk
             }
             tracker_time = D.time;
             sem_post(Fresh);
@@ -106,7 +107,7 @@ void *thread_object_tracking(void *args) {
 
             // print CSV (x, y, vel)
             // printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[0].x(), (double)X[0].y(), (double)RVO::abs(V[0]));
-            printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[1].x(), (double)X[1].y(), (double)RVO::abs(V[1]));
+            // printf("%+6.2lf, %+6.2lf, %+6.2lf\n", (double)X[1].x(), (double)X[1].y(), (double)RVO::abs(V[1]));
 
             // print position pairs
             // for (int i = 0; i < 1; i++)
@@ -121,7 +122,63 @@ void *thread_object_tracking(void *args) {
 }
 
 void *thread_sched_vel_factor(void *args) {
-    ;
+    HeuristicScheduler sched;
+    PackageWithVel sched_data, pilot_data;
+    while (true) {
+        sem_wait(Fresh);
+        sem_wait(Mutex_pipe1);
+        sched_data.time = tracker_time;
+        for (int i = 0; i < 2; i++) {
+            sched_data.cars[i] = X[i];
+            sched_data.vels[i] = V[i];
+        }
+        sem_post(Mutex_pipe1);
+
+        bool bad = false;
+        for (int i = 0; i < 2; i++) {
+            sched_data.cars[i] *= 10;
+            // sched_data.vels[i] /= 100;      // m/s
+            sched_data.vels[i] *= 10;
+            if (isnan(sched_data.vels[i].x())) bad = true;
+            // if (sched_data.vels[i].x() == 0.00) bad = true;
+            printf("%d vel = %lf\n", i, RVO::abs(sched_data.vels[i]));
+        }
+        if (bad) {
+            printf("bad!\n");
+            continue;
+        }
+        sched.setData(sched_data);
+        sched.schedule();
+
+        pilot_data = sched.getNewData();
+
+        char buf[1024];
+        float delta_angle, delta_speed;
+        for (int i = 0; i < 2; i++) {
+            if (rctrl[i].write_fds == -1) {
+                continue;
+            }
+            // std::cerr << i << ", " << pilot_data.vels[i] << std::endl;
+            RVO::Vector2 v1 = pilot_data.vels[i],
+                         v0 = sched_data.vels[i];
+            delta_angle = 0.00;
+            delta_speed = RVO::abs(pilot_data.vels[i]) / RVO::abs(sched_data.vels[i]);
+            if (isnan(delta_speed))
+                delta_speed = 1.00;
+            v_on_car[i] *= delta_speed;
+            printf("deltaV = %lf\n", delta_speed);
+            if (v_on_car[i] > 0.6) v_on_car[i] = 0.6;
+            // 0.2 is too low for the motor to operate
+            // if (v_on_car[i] < 0.2) v_on_car[i] = 0.2;
+            if (v_on_car[i] < 0.2) v_on_car[i] = 0;
+            int buflen = sprintf(buf, "%f %f\n", delta_angle, v_on_car[i]);
+            printf("demanded throttle: %lf\n", v_on_car[i]);
+            int pos = 0;
+            while (pos < buflen)
+                pos += write(rctrl[i].write_fds, buf + pos, buflen - pos);
+        }
+        sched_data = pilot_data;
+    }
     return NULL;
 }
 
@@ -134,9 +191,6 @@ void *thread_sched_RVO2(void *args) {
     goals.push_back(RVO::Vector2(100, 100));
     goals.push_back(RVO::Vector2(0, 0));
     sched.setGoal(goals);
-    // v_on_car[0] = 0.5;
-    // v_on_car[1] = 0.5;
-    // v_on_car[2] = 0.5;
 
     // 8-shape
     std::vector<RVO::Vector2> ggs[3];
@@ -205,8 +259,6 @@ void *thread_sched_RVO2(void *args) {
             delta_speed = 0.7;
             // delta_speed = RVO::abs(v1) / RVO::abs(v0);
             // if (isnan(delta_speed)) delta_speed = 1.00;
-            // v_on_car[i] *= delta_speed;≥
-            // v_on_car[i] = min(v_on_car[i], 0.5);
             double dist = RVO::abs(sched_data.cars[i] - goals[i]);
             if (i == 1)
                 printf("pink dist: %lf\n", dist);
@@ -222,11 +274,8 @@ void *thread_sched_RVO2(void *args) {
                 }
                 std::cerr << "swap goal!\n";
             }
-            std::cout << goals[0] << " " << goals[1] << " " << goals[2] << std::endl;
-            int buflen
-                // = sprintf(buf, "%f %f\n", delta_angle, (float)v_on_car[i]);
-                = sprintf(buf, "%f %f\n", delta_angle, delta_speed);
-            // printf("suggested V = %lf\n", v_on_car[i]);
+            // std::cout << goals[0] << " " << goals[1] << " " << goals[2] << std::endl;
+            int buflen = sprintf(buf, "%f %f\n", delta_angle, delta_speed);
             int pos = 0;
             while (pos < buflen)
                 pos += write(rctrl[i].write_fds, buf + pos, buflen - pos);
@@ -279,6 +328,7 @@ void *thread_send_msg(void *args) {
     } else {
         // parent is merely a thread; the parent may terminate
         pctrl->write_fds = fds[1];
+        printf("fds set to %d\n", fds[1]);
         close(fds[0]);
     }
     return NULL;
@@ -292,6 +342,7 @@ int main() {
     // Caveat: POSIX semaphores not implemented on macOS
     // assert(sem_init(&Fresh, 0, 0) == 0);
     // assert(sem_init(&Mutex_pipe1, 0, 1) == 0);
+    // Caveat: For easy debugging, use named semaphores on macOS
     Fresh = sem_open("fresh", O_CREAT, 0644, 0);
     Mutex_pipe1 = sem_open("pipe1", O_CREAT, 0644, 1);
 
@@ -314,13 +365,15 @@ int main() {
     Coordinate tracker(0);
     res = pthread_create(&pids[++total], &attr, thread_object_tracking, &tracker);
     assert(!res);
-    res = pthread_create(&pids[++total], &attr, thread_sched_RVO2, NULL);
+    // res = pthread_create(&pids[++total], &attr, thread_sched_RVO2, NULL);
+    res = pthread_create(&pids[++total], &attr, thread_sched_vel_factor, NULL);
     assert(!res);
 // */
 
-    rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
-    rctrl[pink   - 1].cmdline = "ssh -t -t pi@192.168.43.167 /home/pi/startup.sh";
-    rctrl[green  - 1].cmdline = "ssh -t -t pi@172.20.10.13";
+    // rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup.sh";
+    rctrl[yellow - 1].cmdline = "ssh -t -t pi@192.168.43.196 /home/pi/startup1.sh";
+    rctrl[pink   - 1].cmdline = "ssh -t -t pi@192.168.43.167 /home/pi/startup1.sh";
+    // rctrl[green  - 1].cmdline = "ssh -t -t pi@172.20.10.13";
 
     res = pthread_create(&pids[++total], &attr, thread_send_msg, rctrl+0);
     assert(!res);

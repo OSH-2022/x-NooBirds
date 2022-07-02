@@ -13,6 +13,7 @@ public:
     Predict();
     void push(const AcrtTime &time, double value);
     double predict(const AcrtTime &future);
+    double predictK(const AcrtTime &future);
     ~Predict();
 
 private:

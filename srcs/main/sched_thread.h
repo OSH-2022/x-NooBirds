@@ -9,10 +9,10 @@ const long double pi = 3.14159265358979323846;
 const long double adj_step_size = 0.097;
 const int adj_times = 10;
 
-#define OBJ_NUM             3
+#define OBJ_NUM             2
 #define PRINT_INTERVAL      2000
 #define TIME_BET_SCHE       30
-#define SCHE_INTERVAL       1400
+#define SCHE_INTERVAL       900
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
@@ -60,9 +60,10 @@ private:
     PackageWithVel data, newData;
 
     int is_adjust[OBJ_NUM] = {0};
-    long double initial_vel[OBJ_NUM] = {0.6, 0.6, 0.6};
-    long double obj_radius[OBJ_NUM] = {30.0, 30.0, 30.0};
-    long double safety_coe = 2.0;
+    long double initial_vel[OBJ_NUM] = {0.8, 0.8};
+    // long double obj_radius[OBJ_NUM] = {150.0, 150.0};
+    long double obj_radius[OBJ_NUM] = {300.0, 300.0};
+    long double safety_coe = 1.3;
 
     // long double corner_radius = 200.0;
 

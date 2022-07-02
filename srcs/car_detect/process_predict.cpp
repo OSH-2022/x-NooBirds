@@ -1,7 +1,7 @@
 #include "includes.h"
 #include "process_predict.h"
 #include <iostream>
-Predict::Predict() { 
+Predict::Predict() {
     lastVld = false;
     paraVld = false;
 }
@@ -29,7 +29,6 @@ void Predict::push(const AcrtTime &time, double value) {
 
 void Predict::updatePara() {
     if (midTime.size() == 0) return;
-    double lastK = k.back();
     AcrtTime lastMidTime = midTime.back();
     double msecSum = 0;
     double squareSum = 0;
@@ -39,11 +38,10 @@ void Predict::updatePara() {
     auto itr2 = k.begin();
     while (itr1 != midTime.end()) {
         int deltaTime = lastMidTime - *itr1;
-        double deltaK = lastK - *itr2;
         msecSum += deltaTime;
-        kSum += deltaK;
+        kSum += *itr2;
         squareSum += deltaTime * deltaTime;
-        multiSum += deltaTime * deltaK;
+        multiSum += deltaTime * *itr2;
         itr1++;
         itr2++;
     }
@@ -59,9 +57,12 @@ void Predict::updatePara() {
 }
 
 double Predict::predict(const AcrtTime &future) {
-    if (!paraVld) 
+    return (future - lastTime) * predictK(lastTime.mid(future)) + lastValue;
+}
+
+double Predict::predictK(const AcrtTime &future) {
+    if (!paraVld)
         updatePara();
-    int msec = future.mid(lastTime) - midTime.back();
-    double predK = k.back() + msec * a + b;
-    return (future - lastTime) * predK + lastValue;
+    float msec = future - midTime.back();
+    return b - msec * a;
 }
