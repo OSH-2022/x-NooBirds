@@ -20,9 +20,6 @@ const int adj_times = 10;
 
 int is_adjust[OBJ_NUM] = {0};
 long double initial_vel[OBJ_NUM];
-// used by scheduler 1
-// #define RATIO         5
-// used by scheduler 1
 
 #define UPPER_LEFT   0
 #define UPPER_EDGE   1
@@ -48,7 +45,7 @@ long double initial_vel[OBJ_NUM];
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
-long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};  // a bug here
+long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
 long double obj_x     [OBJ_NUM];
 long double obj_y     [OBJ_NUM];
 long double obj_vx    [OBJ_NUM];
@@ -83,9 +80,9 @@ traj obj_traj[OBJ_NUM];
 int obj_traj_seg[OBJ_NUM];
 
 int corner_case[OBJ_NUM][OBJ_NUM] = {0};
-// int critical_car[OBJ_NUM][OBJ_NUM][2 = {0};
 int slow_car[OBJ_NUM][OBJ_NUM] = {0};
 
+void initialize_car(int i, traj traj, int traj_seg, long double x, long double y, long double angle, long double vel, int direction);
 void scheduler_1();
 void scheduler_2();
 int collision_detection();
@@ -157,7 +154,7 @@ int main(int argc, char **argv) {
                             obj_vy[i] = velocity_total * sin(angle_adjust);
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case UPPER_EDGE:
@@ -175,7 +172,7 @@ int main(int argc, char **argv) {
                             obj_x[i] = obj_x[i] + obj_vx[i];
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case UPPER_RIGHT:
@@ -199,7 +196,7 @@ int main(int argc, char **argv) {
                             obj_vy[i] = -velocity_total * cos(angle[i]);
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case RIGHT_EDGE:
@@ -218,7 +215,7 @@ int main(int argc, char **argv) {
                             obj_y[i] = obj_y[i] + obj_vy[i];
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case BOTTOM_RIGHT:
@@ -243,7 +240,7 @@ int main(int argc, char **argv) {
                             obj_vy[i] = -velocity_total * sin(angle_adjust);
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case BOTTOM_EDGE:
@@ -262,7 +259,7 @@ int main(int argc, char **argv) {
                             obj_x[i] = obj_x[i] + obj_vx[i];
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case BOTTOM_LEFT:
@@ -287,7 +284,7 @@ int main(int argc, char **argv) {
                             obj_vy[i] = velocity_total * sin(angle_adjust);
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case LEFT_EDGE:
@@ -306,7 +303,7 @@ int main(int argc, char **argv) {
                             obj_y[i] = obj_y[i] + obj_vy[i];
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 default:
@@ -325,7 +322,7 @@ int main(int argc, char **argv) {
                     obj_vx[i] = velocity_total * sin(angle[i]);
                     obj_vy[i] = -velocity_total * cos(angle[i]);
                 }
-                else { // TO BE DONE
+                else {
                 }
                 break;
             case tri:
@@ -350,7 +347,7 @@ int main(int argc, char **argv) {
                             obj_vy[i] = -velocity_total * cos(angle[i]);
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 case TRI_RIGHT_EDGE:
@@ -362,7 +359,7 @@ int main(int argc, char **argv) {
                             angle[i] = 13 * pi / 6 - velocity_total / corner_radius;
                         }
                     }
-                    else { // TO BE DONE
+                    else {
                     }
                     break;
                 default:
@@ -499,11 +496,7 @@ int main(int argc, char **argv) {
         ret = collision_detection();
         if (ret == 1) {
             // return 1;
-            // Sleep(1);
         }
-        // if (sim_time == 43500) {
-        //     exit(0);
-        // }
     }
 
     return 0;
@@ -525,262 +518,260 @@ int collision_detection() {
     return 0;
 }
 
-// void scheduler_1() {
-//     long double obj_vx_initial[OBJ_NUM] = {0.0};
-//     long double obj_vy_initial[OBJ_NUM] = {0.0};
-//     long double obj_x_initial[OBJ_NUM] = {0.0};
-//     long double obj_y_initial[OBJ_NUM] = {0.0};
-//     long double obj_x_tmp[OBJ_NUM] = {0.0};
-//     long double obj_y_tmp[OBJ_NUM] = {0.0};
-//     long double obj_vx_tmp[OBJ_NUM] = {0.0};
-//     long double obj_vy_tmp[OBJ_NUM] = {0.0};
-//     int i = 0;
-//     int j = 0;
-//     int k = 0;
-//     long double dist_sq = 0;
-//     // long double velocity_total[OBJ_NUM] = {0.0};
-//     long double adj_coe = 1.0 - adj_step_size;
-//     int adjusted_car;
-//     int is_safe = 1;
+void scheduler_1() {
+    long double obj_vx_initial[OBJ_NUM] = {0.0};
+    long double obj_vy_initial[OBJ_NUM] = {0.0};
+    long double obj_x_initial[OBJ_NUM] = {0.0};
+    long double obj_y_initial[OBJ_NUM] = {0.0};
+    long double obj_x_tmp[OBJ_NUM] = {0.0};
+    long double obj_y_tmp[OBJ_NUM] = {0.0};
+    long double obj_vx_tmp[OBJ_NUM] = {0.0};
+    long double obj_vy_tmp[OBJ_NUM] = {0.0};
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    long double dist_sq = 0;
+    long double adj_coe = 1.0 - adj_step_size;
+    int adjusted_car;
+    int is_safe = 1;
 
-//     for (i = 0; i < OBJ_NUM; i++) {
-//         obj_vx_initial[i] = obj_vx[i];
-//         obj_vy_initial[i] = obj_vy[i];
-//         obj_x_initial[i] = obj_x[i];
-//         obj_y_initial[i] = obj_y[i];
-//         obj_x_tmp[i] = obj_x[i];
-//         obj_y_tmp[i] = obj_y[i];
-//         obj_vx_tmp[i] = obj_vx[i];
-//         obj_vy_tmp[i] = obj_vy[i];
-//     }
+    for (i = 0; i < OBJ_NUM; i++) {
+        obj_vx_initial[i] = obj_vx[i];
+        obj_vy_initial[i] = obj_vy[i];
+        obj_x_initial[i] = obj_x[i];
+        obj_y_initial[i] = obj_y[i];
+        obj_x_tmp[i] = obj_x[i];
+        obj_y_tmp[i] = obj_y[i];
+        obj_vx_tmp[i] = obj_vx[i];
+        obj_vy_tmp[i] = obj_vy[i];
+    }
 
-//     int success = 0;
-//     for (i = 0; i < SCHE_INTERVAL; i++) {
-//         for (j = 0; j < OBJ_NUM; j++) {
-//             obj_x_tmp[j] += obj_vx_tmp[j];
-//             obj_y_tmp[j] += obj_vy_tmp[j];
-//         }
-//         for (j = 0; j < OBJ_NUM - 1; j++) {
-//             for (k = j + 1; k < OBJ_NUM; k++) {
-//                 dist_sq = pow((obj_x_tmp[j] - obj_x_tmp[k]), 2) + pow((obj_y_tmp[j] - obj_y_tmp[k]), 2);
-//                 if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
-//                     long double velocity_j;
-//                     long double velocity_k;
-//                     velocity_j = pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2);
-//                     velocity_k = pow(obj_vx_tmp[k], 2) + pow(obj_vy_tmp[k], 2);
-//                     is_safe = 0;
-//                     adj_coe = 1.0 - adj_step_size;
-//                     if (velocity_j > velocity_k) {
-//                         // obj_vx_tmp[j] = obj_vx_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
-//                         // obj_vy_tmp[j] = obj_vy_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
-//                         // velocity_total[j] = sqrt(pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2));
-//                         for (int l = 0; l < adj_times; l++) {
-//                             long double j_x = obj_x_initial[j];
-//                             long double j_y = obj_y_initial[j];
-//                             long double k_x = obj_x_initial[k];
-//                             long double k_y = obj_y_initial[k];
-//                             if (l == adj_times - 1) {
-//                                 adj_coe = 0.0;
-//                             }
-//                             long double j_vx = adj_coe * obj_vx_initial[j];
-//                             long double j_vy = adj_coe * obj_vy_initial[j];
-//                             long double k_vx = obj_vx_initial[k];
-//                             long double k_vy = obj_vy_initial[k];
-//                             success = 1;
-//                             int dist_sq;
-//                             for (int m = 0; m < SCHE_INTERVAL; m++) {
-//                                 dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
-//                                 if (dist_sq < pow(((safety_coe + 1.0) * (obj_radius[j] + obj_radius[k])), 2)) {
-//                                     success = 0;
-//                                     break;
-//                                 }
-//                                 j_x += j_vx;
-//                                 j_y += j_vy;
-//                                 k_x += k_vx;
-//                                 k_y += k_vy;
-//                             }
-//                             if (success == 1) {
-//                                 // if (l == adj_times - 1) {
-//                                 //     adj_coe = 0.0;
-//                                 // }
-//                                 break;
-//                             }
+    int success = 0;
+    for (i = 0; i < SCHE_INTERVAL; i++) {
+        for (j = 0; j < OBJ_NUM; j++) {
+            obj_x_tmp[j] += obj_vx_tmp[j];
+            obj_y_tmp[j] += obj_vy_tmp[j];
+        }
+        for (j = 0; j < OBJ_NUM - 1; j++) {
+            for (k = j + 1; k < OBJ_NUM; k++) {
+                dist_sq = pow((obj_x_tmp[j] - obj_x_tmp[k]), 2) + pow((obj_y_tmp[j] - obj_y_tmp[k]), 2);
+                if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
+                    long double velocity_j;
+                    long double velocity_k;
+                    velocity_j = pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2);
+                    velocity_k = pow(obj_vx_tmp[k], 2) + pow(obj_vy_tmp[k], 2);
+                    is_safe = 0;
+                    adj_coe = 1.0 - adj_step_size;
+                    if (velocity_j > velocity_k) {
+                        // obj_vx_tmp[j] = obj_vx_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
+                        // obj_vy_tmp[j] = obj_vy_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
+                        // velocity_total[j] = sqrt(pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2));
+                        for (int l = 0; l < adj_times; l++) {
+                            long double j_x = obj_x_initial[j];
+                            long double j_y = obj_y_initial[j];
+                            long double k_x = obj_x_initial[k];
+                            long double k_y = obj_y_initial[k];
+                            if (l == adj_times - 1) {
+                                adj_coe = 0.0;
+                            }
+                            long double j_vx = adj_coe * obj_vx_initial[j];
+                            long double j_vy = adj_coe * obj_vy_initial[j];
+                            long double k_vx = obj_vx_initial[k];
+                            long double k_vy = obj_vy_initial[k];
+                            success = 1;
+                            int dist_sq;
+                            for (int m = 0; m < SCHE_INTERVAL; m++) {
+                                dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
+                                if (dist_sq < pow(((safety_coe + 1.0) * (obj_radius[j] + obj_radius[k])), 2)) {
+                                    success = 0;
+                                    break;
+                                }
+                                j_x += j_vx;
+                                j_y += j_vy;
+                                k_x += k_vx;
+                                k_y += k_vy;
+                            }
+                            if (success == 1) {
+                                // if (l == adj_times - 1) {
+                                //     adj_coe = 0.0;
+                                // }
+                                break;
+                            }
 
-//                             adj_coe = adj_coe - adj_step_size;
-//                         }
-//                         if (success == 1) {
-//                             is_adjust[j] = 1;
-//                             adjusted_car = j;
-//                             // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
-//                             // print_location_verbose();
-//                             break;
-//                         }
-//                     }
-//                     else {
-//                         // obj_vx_tmp[j] = obj_vx_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
-//                         // obj_vy_tmp[j] = obj_vy_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
-//                         // velocity_total[j] = sqrt(pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2));
-//                         for (int l = 0; l < adj_times; l++) {
-//                             long double j_x = obj_x_initial[j];
-//                             long double j_y = obj_y_initial[j];
-//                             long double k_x = obj_x_initial[k];
-//                             long double k_y = obj_y_initial[k];
+                            adj_coe = adj_coe - adj_step_size;
+                        }
+                        if (success == 1) {
+                            is_adjust[j] = 1;
+                            adjusted_car = j;
+                            // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
+                            // print_location_verbose();
+                            break;
+                        }
+                    }
+                    else {
+                        // obj_vx_tmp[j] = obj_vx_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
+                        // obj_vy_tmp[j] = obj_vy_tmp[j] * ((long double)(i + RATIO * SCHE_INTERVAL) / (long double)((RATIO + 1) * SCHE_INTERVAL));
+                        // velocity_total[j] = sqrt(pow(obj_vx_tmp[j], 2) + pow(obj_vy_tmp[j], 2));
+                        for (int l = 0; l < adj_times; l++) {
+                            long double j_x = obj_x_initial[j];
+                            long double j_y = obj_y_initial[j];
+                            long double k_x = obj_x_initial[k];
+                            long double k_y = obj_y_initial[k];
 
-//                             long double j_vx = obj_vx_initial[j];
-//                             long double j_vy = obj_vy_initial[j];
-//                             long double k_vx = adj_coe * obj_vx_initial[k];
-//                             long double k_vy = adj_coe * obj_vy_initial[k];
-//                             success = 1;
-//                             int dist_sq;
-//                             for (int m = 0; m < SCHE_INTERVAL; m++) {
-//                                 dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
-//                                 if (dist_sq < pow(((safety_coe + 1.0) * (obj_radius[j] + obj_radius[k])), 2)) {
-//                                     success = 0;
-//                                     break;
-//                                 }
-//                                 j_x += j_vx;
-//                                 j_y += j_vy;
-//                                 k_x += k_vx;
-//                                 k_y += k_vy;
-//                             }
-//                             if (success == 1) {
-//                                 // if (l == adj_times - 1) {
-//                                 //     adj_coe = 0.0;
-//                                 // }
-//                                 break;
-//                             }
-//                             adj_coe = adj_coe - adj_step_size;
-//                         }
-//                         if (success == 1) {
-//                             is_adjust[k] = 1;
-//                             adjusted_car = k;
-//                             // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
-//                             // print_location_verbose();
-//                             break;
-//                         }
-//                     }
-//                 }
-//             }
-//             if (success == 1) {
-//                 break;
-//             }
-//         }
-//         if (success == 1) {
-//             break;
-//         }
-//     }
+                            long double j_vx = obj_vx_initial[j];
+                            long double j_vy = obj_vy_initial[j];
+                            long double k_vx = adj_coe * obj_vx_initial[k];
+                            long double k_vy = adj_coe * obj_vy_initial[k];
+                            success = 1;
+                            int dist_sq;
+                            for (int m = 0; m < SCHE_INTERVAL; m++) {
+                                dist_sq = pow((j_x - k_x), 2) + pow((j_y - k_y), 2);
+                                if (dist_sq < pow(((safety_coe + 1.0) * (obj_radius[j] + obj_radius[k])), 2)) {
+                                    success = 0;
+                                    break;
+                                }
+                                j_x += j_vx;
+                                j_y += j_vy;
+                                k_x += k_vx;
+                                k_y += k_vy;
+                            }
+                            if (success == 1) {
+                                // if (l == adj_times - 1) {
+                                //     adj_coe = 0.0;
+                                // }
+                                break;
+                            }
+                            adj_coe = adj_coe - adj_step_size;
+                        }
+                        if (success == 1) {
+                            is_adjust[k] = 1;
+                            adjusted_car = k;
+                            // std::cout << "Car " << adjusted_car << " is adjusted at time " << sim_time << "." << std::endl;
+                            // print_location_verbose();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (success == 1) {
+                break;
+            }
+        }
+        if (success == 1) {
+            break;
+        }
+    }
 
-// // long double velocity_total_initial = 0.0;
-// // long double velocity_total_tmp = 0.0;
-// // for (i = 0; i < OBJ_NUM; i++) {
-// //     velocity_total_initial = sqrt(pow(obj_vx_initial[i], 2) + pow(obj_vy_initial[i], 2));
-// //     velocity_total_tmp = sqrt(pow(obj_vx_tmp[i], 2) + pow(obj_vy_tmp[i], 2));
-// //     vel_adjust[i] = velocity_total_tmp / velocity_total_initial;
-// // }
-
-//     int is_update = 0;
-//     int is_still_safe = 1;
-//     int updated_car = 0;
-//     if (is_safe == 1) {
-//         for (int n = 0; n < OBJ_NUM; n++) {
-//             if (is_adjust[n] == 0) {
-//                 continue;
-//             }
-//             else {
-//                 is_still_safe = 1;
-//                 for (i = 0; i < OBJ_NUM; i++) {
-//                     if (i == n) {
-//                         obj_x_tmp[i] = obj_x[i];
-//                         obj_y_tmp[i] = obj_y[i];
-//                         long double vel_angle;
-//                         vel_angle = return_velocity_angle(i);
-//                         obj_vx_tmp[i] = initial_vel[i] * cos(vel_angle);
-//                         obj_vy_tmp[i] = initial_vel[i] * sin(vel_angle);
-//                     }
-//                     else {
-//                         obj_x_tmp[i] = obj_x[i];
-//                         obj_y_tmp[i] = obj_y[i];
-//                         obj_vx_tmp[i] = obj_vx[i];
-//                         obj_vy_tmp[i] = obj_vy[i];
-//                     }
-//                 }
-//                 for (i = 0; i < SCHE_INTERVAL; i++) {
-//                     for (j = 0; j < OBJ_NUM; j++) {
-//                         obj_x_tmp[j] += obj_vx_tmp[j];
-//                         obj_y_tmp[j] += obj_vy_tmp[j];
-//                     }
-//                     for (j = 0; j < OBJ_NUM - 1; j++) {
-//                         for (k = j + 1; k < OBJ_NUM; k++) {
-//                             dist_sq = pow((obj_x_tmp[j] - obj_x_tmp[k]), 2) + pow((obj_y_tmp[j] - obj_y_tmp[k]), 2);
-//                             if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
-//                                 is_still_safe = 0;
-//                             }
-//                         }
-//                     }
-//                 }
-//                 if (is_still_safe == 1) {
-//                     is_update = 1;
-//                     updated_car = n;
-//                     is_adjust[n] = 0;
-//                     // std::cout << "Car " << updated_car << " is updated at time " << sim_time << "." << std::endl;
-//                     // print_location_verbose();
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-
-//     if (is_safe == 1) {
-//         if (is_update == 1) {
-//             for (i = 0; i < OBJ_NUM; i++) {
-//                 if (i == updated_car) {
-//                     long double vel_angle;
-//                     vel_angle = return_velocity_angle(i);
-//                     vel_adjust[i][0] = initial_vel[i] * cos(vel_angle);
-//                     vel_adjust[i][1] = initial_vel[i] * sin(vel_angle);
-//                 }
-//                 else {
-//                     vel_adjust[i][0] = obj_vx[i];
-//                     vel_adjust[i][1] = obj_vy[i];
-//                 }
-//             }
-//         }
-//         else {
-//             for (i = 0; i < OBJ_NUM; i++) {
-//                 vel_adjust[i][0] = obj_vx[i];
-//                 vel_adjust[i][1] = obj_vy[i];
-//             }
-//         }
-//     }
-//     else {
-//         for (i = 0; i < OBJ_NUM; i++) {
-//             if (i == adjusted_car) {
-//                 vel_adjust[i][0] = adj_coe * obj_vx[i];
-//                 vel_adjust[i][1] = adj_coe * obj_vy[i];
-//             }
-//             else {
-//                 vel_adjust[i][0] = obj_vx[i];
-//                 vel_adjust[i][1] = obj_vy[i];
-//             }
-//         }
-//     }
-
-//     // for (i = 0; i < OBJ_NUM; i++) {
-//     //     if (obj_vx[i] > 3.0 || obj_vy[i] > 3.0 || abs(obj_x[i]) > 2000.0 || abs(obj_y[i]) > 2000.0) {
-//     //         int a = 0;
-//     //         break;
-//     //     }
-//     // }
+// long double velocity_total_initial = 0.0;
+// long double velocity_total_tmp = 0.0;
+// for (i = 0; i < OBJ_NUM; i++) {
+//     velocity_total_initial = sqrt(pow(obj_vx_initial[i], 2) + pow(obj_vy_initial[i], 2));
+//     velocity_total_tmp = sqrt(pow(obj_vx_tmp[i], 2) + pow(obj_vy_tmp[i], 2));
+//     vel_adjust[i] = velocity_total_tmp / velocity_total_initial;
 // }
 
+    int is_update = 0;
+    int is_still_safe = 1;
+    int updated_car = 0;
+    if (is_safe == 1) {
+        for (int n = 0; n < OBJ_NUM; n++) {
+            if (is_adjust[n] == 0) {
+                continue;
+            }
+            else {
+                is_still_safe = 1;
+                for (i = 0; i < OBJ_NUM; i++) {
+                    if (i == n) {
+                        obj_x_tmp[i] = obj_x[i];
+                        obj_y_tmp[i] = obj_y[i];
+                        long double vel_angle;
+                        vel_angle = return_velocity_angle(i);
+                        obj_vx_tmp[i] = initial_vel[i] * cos(vel_angle);
+                        obj_vy_tmp[i] = initial_vel[i] * sin(vel_angle);
+                    }
+                    else {
+                        obj_x_tmp[i] = obj_x[i];
+                        obj_y_tmp[i] = obj_y[i];
+                        obj_vx_tmp[i] = obj_vx[i];
+                        obj_vy_tmp[i] = obj_vy[i];
+                    }
+                }
+                for (i = 0; i < SCHE_INTERVAL; i++) {
+                    for (j = 0; j < OBJ_NUM; j++) {
+                        obj_x_tmp[j] += obj_vx_tmp[j];
+                        obj_y_tmp[j] += obj_vy_tmp[j];
+                    }
+                    for (j = 0; j < OBJ_NUM - 1; j++) {
+                        for (k = j + 1; k < OBJ_NUM; k++) {
+                            dist_sq = pow((obj_x_tmp[j] - obj_x_tmp[k]), 2) + pow((obj_y_tmp[j] - obj_y_tmp[k]), 2);
+                            if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
+                                is_still_safe = 0;
+                            }
+                        }
+                    }
+                }
+                if (is_still_safe == 1) {
+                    is_update = 1;
+                    updated_car = n;
+                    is_adjust[n] = 0;
+                    // std::cout << "Car " << updated_car << " is updated at time " << sim_time << "." << std::endl;
+                    // print_location_verbose();
+                    break;
+                }
+            }
+        }
+    }
+
+    if (is_safe == 1) {
+        if (is_update == 1) {
+            for (i = 0; i < OBJ_NUM; i++) {
+                if (i == updated_car) {
+                    long double vel_angle;
+                    vel_angle = return_velocity_angle(i);
+                    vel_adjust[i][0] = initial_vel[i] * cos(vel_angle);
+                    vel_adjust[i][1] = initial_vel[i] * sin(vel_angle);
+                }
+                else {
+                    vel_adjust[i][0] = obj_vx[i];
+                    vel_adjust[i][1] = obj_vy[i];
+                }
+            }
+        }
+        else {
+            for (i = 0; i < OBJ_NUM; i++) {
+                vel_adjust[i][0] = obj_vx[i];
+                vel_adjust[i][1] = obj_vy[i];
+            }
+        }
+    }
+    else {
+        for (i = 0; i < OBJ_NUM; i++) {
+            if (i == adjusted_car) {
+                vel_adjust[i][0] = adj_coe * obj_vx[i];
+                vel_adjust[i][1] = adj_coe * obj_vy[i];
+            }
+            else {
+                vel_adjust[i][0] = obj_vx[i];
+                vel_adjust[i][1] = obj_vy[i];
+            }
+        }
+    }
+
+    // for (i = 0; i < OBJ_NUM; i++) {
+    //     if (obj_vx[i] > 3.0 || obj_vy[i] > 3.0 || abs(obj_x[i]) > 2000.0 || abs(obj_y[i]) > 2000.0) {
+    //         int a = 0;
+    //         break;
+    //     }
+    // }
+}
 
 void scheduler_2() {
     // long double vx_initial[OBJ_NUM] = {0.0};
     // long double vy_initial[OBJ_NUM] = {0.0};
     // long double x_initial[OBJ_NUM] = {0.0};
     // long double y_initial[OBJ_NUM] = {0.0};
-    long double x_tmp[OBJ_NUM] = {0.0};
-    long double y_tmp[OBJ_NUM] = {0.0};
+    long double x_tmp[OBJ_NUM]  = {0.0};
+    long double y_tmp[OBJ_NUM]  = {0.0};
     long double vx_tmp[OBJ_NUM] = {0.0};
     long double vy_tmp[OBJ_NUM] = {0.0};
     long double adj_coe = 1.0 - adj_step_size;
@@ -795,15 +786,6 @@ void scheduler_2() {
     int need_update = 0;
     int need_adjust_total = 0;
     int ret = 0;
-
-    // if (sim_time == 43260) {
-    //     Sleep(1);
-    // }
-
-    // if (fabs(sqrt(pow(obj_vx[2], 2) + pow(obj_vy[2], 2))) < 0.3 && fabs(obj_y[2]) < 1e-6) {
-    //     Sleep(1);
-    // }
-
     int cnt = 0;
 
     for (i = 0; i < OBJ_NUM; i++) {
@@ -818,8 +800,6 @@ void scheduler_2() {
     }
 
     do {
-
-
         cnt++;
         if (cnt > 10) {
             Sleep(1);
@@ -920,64 +900,63 @@ void scheduler_2() {
                         is_adjust[j] = 1;
                         slow_car[j][k] = k;
                     }
-                    else { // TO BE DONE
+                    else { 
 
                     }
                 }
 
+                // int cond1 = (x_tmp[j] < x_tmp[k]) && (vx_tmp[k] - vx_tmp[j] > 0);
+                // int cond2 = (x_tmp[j] > x_tmp[k]) && (vx_tmp[k] - vx_tmp[k] < 0);
+                // int cond3 = (fabs(y_tmp[j] - y_tmp[k]) < 20.0) && (fabs(vy_tmp[j] - vy_tmp[k] < 20.0));
+                // if (cond3 && (cond2 || cond1)) {
+                //     if (fabs(vx_tmp[j]) < fabs(vx_tmp[k])) {
+                //         adjusted_car = j;
+                //         is_adjust[j] = 1;
+                //         slow_car[j][k] = k;
+                //     }
+                //     else {
+                //         adjusted_car = k;
+                //         is_adjust[k] = 1;
+                //         slow_car[j][k] = j;
+                //     }
+                // }
+                // else {
+                //     if (velocity_j > velocity_k) {
+                //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
+                //         // if (ret == 1) {
+                //         //     need_adjust = 0;
+                //         // }
+                //         // else {
+                //             adjusted_car = j;
+                //             is_adjust[j] = 1;
+                //             slow_car[j][k] = k;
+                //         // }
+                //     }
+                //     else {
+                //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
+                //         // if (ret == 1) {
+                //         //     need_adjust = 0;
+                //         // }
+                //         // else {
+                //             adjusted_car = k;
+                //             is_adjust[k] = 1;
+                //             slow_car[j][k] = j;
+                //     }
+                // }
 
-            //     // int cond1 = (x_tmp[j] < x_tmp[k]) && (vx_tmp[k] - vx_tmp[j] > 0);
-            //     // int cond2 = (x_tmp[j] > x_tmp[k]) && (vx_tmp[k] - vx_tmp[k] < 0);
-            //     // int cond3 = (fabs(y_tmp[j] - y_tmp[k]) < 20.0) && (fabs(vy_tmp[j] - vy_tmp[k] < 20.0));
-            //     // if (cond3 && (cond2 || cond1)) {
-            //     //     if (fabs(vx_tmp[j]) < fabs(vx_tmp[k])) {
-            //     //         adjusted_car = j;
-            //     //         is_adjust[j] = 1;
-            //     //         slow_car[j][k] = k;
-            //     //     }
-            //     //     else {
-            //     //         adjusted_car = k;
-            //     //         is_adjust[k] = 1;
-            //     //         slow_car[j][k] = j;
-            //     //     }
-            //     // }
-            //     // else {
-            //     //     if (velocity_j > velocity_k) {
-            //     //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
-            //     //         // if (ret == 1) {
-            //     //         //     need_adjust = 0;
-            //     //         // }
-            //     //         // else {
-            //     //             adjusted_car = j;
-            //     //             is_adjust[j] = 1;
-            //     //             slow_car[j][k] = k;
-            //     //         // }
-            //     //     }
-            //     //     else {
-            //     //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
-            //     //         // if (ret == 1) {
-            //     //         //     need_adjust = 0;
-            //     //         // }
-            //     //         // else {
-            //     //             adjusted_car = k;
-            //     //             is_adjust[k] = 1;
-            //     //             slow_car[j][k] = j;
-            //     //     }
-            //     // }
 
-
-            //     // long double r_jk[2] = {x_tmp[j] - x_tmp[k], y_tmp[j] - y_tmp[k]};
-            //     // long double product = vx_tmp[k] * r_jk[0] + vy_tmp[k] * r_jk[1];
-            //     // if (product > 0) {
-            //     //     adjusted_car = k;
-            //     //     is_adjust[k] = 1;
-            //     //     slow_car[j][k] = j;
-            //     // }
-            //     // else {
-            //     //     adjusted_car = j;
-            //     //     is_adjust[j] = 1;
-            //     //     slow_car[j][k] = k;
-            //     // }
+                // long double r_jk[2] = {x_tmp[j] - x_tmp[k], y_tmp[j] - y_tmp[k]};
+                // long double product = vx_tmp[k] * r_jk[0] + vy_tmp[k] * r_jk[1];
+                // if (product > 0) {
+                //     adjusted_car = k;
+                //     is_adjust[k] = 1;
+                //     slow_car[j][k] = j;
+                // }
+                // else {
+                //     adjusted_car = j;
+                //     is_adjust[j] = 1;
+                //     slow_car[j][k] = k;
+                // }
             }
         }
         // else { // try to update
@@ -1034,18 +1013,16 @@ void scheduler_2() {
         //         need_update = 0;
         //     }
         // }
-
         if (need_adjust == 1) {
             for (i = 0; i < OBJ_NUM; i++) {
                 if (i == adjusted_car) {
                     // vel_adjust[i][0] = adj_coe * obj_vx[i];
                     // vel_adjust[i][1] = adj_coe * obj_vy[i];
                     vx_tmp[i] = adj_coe * vx_tmp[i];
-                    vy_tmp[i] = adj_coe * vy_tmp[i];  // a bug here, focused vx, vy
+                    vy_tmp[i] = adj_coe * vy_tmp[i];
                 }
             }
         }
-
         // if (need_adjust == 0) {
         //     if (need_update == 1) {
         //         int flag = 1;
@@ -1105,66 +1082,61 @@ void scheduler_2() {
 
     long double vx_save;
     long double vy_save;
-    // if (need_adjust_total == 0) {
-        for (l = 0; l < OBJ_NUM; l++) {
-            if (is_adjust[l] == 0) {
-                continue;
+    for (l = 0; l < OBJ_NUM; l++) {
+        if (is_adjust[l] == 0) {
+            continue;
+        }
+        else {
+            for (i = 0; i < OBJ_NUM; i++) {
+                if (i == l) {
+                    // x_tmp[i] = obj_x[i];
+                    // y_tmp[i] = obj_y[i];
+                    long double vel_angle;
+                    vel_angle = return_velocity_angle(i);
+                    vx_save = vx_tmp[i];
+                    vy_save = vy_tmp[i];
+                    vx_tmp[i] = initial_vel[i] * cos(vel_angle);
+                    vy_tmp[i] = initial_vel[i] * sin(vel_angle);
+                }
+                else {
+                    // x_tmp[i] = obj_x[i];
+                    // y_tmp[i] = obj_y[i];
+                    // vx_tmp[i] = obj_vx[i];
+                    // vy_tmp[i] = obj_vy[i];
+                }
             }
-            else {
-                for (i = 0; i < OBJ_NUM; i++) {
-                    if (i == l) {
-                        // x_tmp[i] = obj_x[i];
-                        // y_tmp[i] = obj_y[i];
-                        long double vel_angle;
-                        vel_angle = return_velocity_angle(i);
-                        vx_save = vx_tmp[i];
-                        vy_save = vy_tmp[i];
-                        vx_tmp[i] = initial_vel[i] * cos(vel_angle);
-                        vy_tmp[i] = initial_vel[i] * sin(vel_angle);
+
+            ret = 0;
+            for (j = 0; j < OBJ_NUM - 1; j++) {
+                for (k = j + 1; k < OBJ_NUM; k++) {
+                    long double coe;
+                    if (l == slow_car[j][k] && corner_case[j][k] == 1) {
+                        coe = 1.0;
                     }
                     else {
-                        // x_tmp[i] = obj_x[i];
-                        // y_tmp[i] = obj_y[i];
-                        // vx_tmp[i] = obj_vx[i];
-                        // vy_tmp[i] = obj_vy[i];
+                        coe = safety_coe * 2.0;
                     }
-                }
-
-                ret = 0;
-                for (j = 0; j < OBJ_NUM - 1; j++) {
-                    for (k = j + 1; k < OBJ_NUM; k++) {
-                        long double coe;
-                        if (l == slow_car[j][k] && corner_case[j][k] == 1) {
-                            coe = 1.0;
-                        }
-                        else {
-                            coe = safety_coe * 2.0;
-                        }
-                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
-                        if (ret == 1) {
-                            break;
-                        }
-                    }
+                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
                     if (ret == 1) {
                         break;
                     }
                 }
-
-                if (ret == 0) {
-                    // need_update = 1;
-                    is_adjust[l] = 0;
-                    updated_car = l;
+                if (ret == 1) {
                     break;
                 }
-                else {
-                    vx_tmp[l] = vx_save;
-                    vy_tmp[l] = vy_save;
-                }
             }
-        // }
-        // if (ret == 1) {
-        //     need_update = 0;
-        // }
+
+            if (ret == 0) {
+                // need_update = 1;
+                is_adjust[l] = 0;
+                updated_car = l;
+                break;
+            }
+            else {
+                vx_tmp[l] = vx_save;
+                vy_tmp[l] = vy_save;
+            }
+        }
     }
 
     for (i = 0; i < OBJ_NUM; i++) {
@@ -1221,9 +1193,6 @@ int unsafe_state_detector(int j, int k, long double jx, long double jy, long dou
     }
 
     if (minimum_dist < pow((coe * (obj_radius[j] + obj_radius[k])), 2)) {
-        // if (fabs(minimum_dist - dist_now) < 1e-6) {
-        //     return 0;
-        // }
         return 1;
     }
     else {
@@ -1248,12 +1217,9 @@ void print_location_concise() {
         for (int i = 0; i < OBJ_NUM; i++) {
             std::cout << obj_x[i] << " " << obj_y[i] << " ";
         }
+        // Used to draw with simulation time
         // std::cout << "counter" << counter;
         std::cout << std::endl;
-        // counter++;
-        // if (counter >= 130) {
-        //     printf("1");
-        // }
     }
 }
 
@@ -1345,6 +1311,59 @@ long double return_velocity_angle(int id) {
             break;
         case EIGHT_LEFT_CIR:
             return angle[id] - pi / 2;
+            break;
+        default:
+            break;
+        }
+    default:
+        break;
+    }
+}
+
+void initialize_car(int i, traj traj, int traj_seg, long double x, long double y, long double ang, long double vel, int dir) {
+    switch (traj) {
+    case rect:
+        break;
+    case cir:
+        if (dir == CLOCKWISE) {
+            obj_x[i] = cir_center[0] + cir_radius * cos(ang);
+            obj_y[i] = cir_center[1] + cir_radius * sin(ang);
+            obj_vx[i] = vel * sin(ang);
+            obj_vy[i] = vel * cos(ang);
+            angle[i] = ang;
+            initial_vel[i] = vel;
+            direction[i] = dir;
+            obj_traj[i] = traj;
+            obj_traj_seg[i] = traj_seg;
+        }
+        break;
+    case eight:
+        switch (traj_seg) {
+        case EIGHT_PAR_LINE:
+            if (dir == CLOCKWISE) {
+                obj_x[i] = x;
+                obj_y[i] = eight_center[1];
+                obj_vx[i] = -vel;
+                obj_vy[i] = 0.0;
+                angle[i] = pi;
+                initial_vel[i] = vel;
+                direction[i] = dir;
+                obj_traj[i] = traj;
+                obj_traj_seg[i] = traj_seg;
+            }
+            break;
+        case EIGHT_VER_LINE:
+            if (dir == CLOCKWISE) {
+                obj_x[i] = eight_center[0];
+                obj_y[i] = y;
+                obj_vx[i] = 0.0;
+                obj_vy[i] = vel;
+                angle[i] = pi / 2;
+                initial_vel[i] = vel;
+                direction[i] = dir;
+                obj_traj[i] = traj;
+                obj_traj_seg[i] = traj_seg;
+            }
             break;
         default:
             break;
