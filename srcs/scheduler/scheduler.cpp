@@ -45,8 +45,9 @@ long double initial_vel[OBJ_NUM];
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
-int slow_down_time[OBJ_NUM] = {0};
-int priority[OBJ_NUM] = {0}; 
+int slow_down_times[OBJ_NUM] = {0};
+int speed_up_times[OBJ_NUM] = {0};
+int priority[OBJ_NUM] = {0};                 // The bigger the number is, the higher priority the car has.
 
 long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
 long double obj_x     [OBJ_NUM];
@@ -864,7 +865,6 @@ void scheduler_2() {
         // if (obj_traj_seg[0] == EIGHT_LEFT_CIR && angle[i] < pi && obj_vx[0] > 0) {
         //     Sleep(1);
         // }
-        // 43290
         // if (j == 0 && k == 1) {
         //     Sleep(1);
         // // }
@@ -888,28 +888,225 @@ void scheduler_2() {
             long double vel_total_k;
             vel_total_j = sqrt(pow(vx_tmp[j], 2) + pow(vy_tmp[j], 2));
             vel_total_k = sqrt(pow(vx_tmp[k], 2) + pow(vy_tmp[k], 2));
-            while (amplify_factor * vel_total_j < initial_vel[j]) {
-                /* code */
-                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
-                if (ret == 0) {
-                    success = 1;
-                    adjusted_car = j;
-                    is_adjust[j] = 1;
-                    vx_tmp[j] *= amplify_factor;
-                    vy_tmp[j] *= amplify_factor;
-                    break;
-                }
-                amplify_factor *= 2.0;
-            }
 
-            if (success == 0) {
-                amplify_factor = 2.0;
+            // *
+            // If car j has a higher priority than car k, the algorithm should consider to increase the speed of car j before car k or decrease the speed of car j after car k in order to reduce the traffic time of car j.
+            // *
+            if (priority[j] > priority[k]) {
+                while (amplify_factor * vel_total_j < initial_vel[j]) {
+                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                    if (ret == 0) {
+                        success = 1;
+                        adjusted_car = j;
+                        speed_up_times[j]++;
+                        is_adjust[j] = 1;
+                        vx_tmp[j] *= amplify_factor;
+                        vy_tmp[j] *= amplify_factor;
+                        break;
+                    }
+                    amplify_factor *= 2.0;
+                }
+
+                if (success == 0) {
+                    amplify_factor = 2.0;
+                    while (amplify_factor * vel_total_k < initial_vel[k]) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], amplify_factor * vx_tmp[k], amplify_factor * vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = k;
+                            speed_up_times[k]++;
+                            is_adjust[k] = 1;
+                            vx_tmp[k] *= amplify_factor;
+                            vy_tmp[k] *= amplify_factor;
+                            break;
+                        }
+                        amplify_factor *= 2.0;
+                    }
+                }
+
+
+                // *
+                // If the attempts to increase the speed of one car fails, try next to decrease the speed of the car.
+                // *
+                if (success == 0) {
+                    adj_coe = 1.0 - adj_step_size;
+                    for (i = 0; i < adj_times; i++) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = k;
+                            slow_down_times[k]++;
+                            is_adjust[k] = 1;
+                            break;
+                        }
+                        else {
+                            adj_coe -= adj_step_size;
+                        }
+                    }
+                }
+
+                if (success == 0) {
+                    adj_coe = 1.0 - adj_step_size;
+                    for (i = 0; i < adj_times; i++) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = j;
+                            slow_down_times[j]++;
+                            is_adjust[j] = 1;
+                            break;
+                        }
+                        else {
+                            adj_coe -= adj_step_size;
+                        }
+                    }
+                }
+            }
+            // *
+            // If two cars have the same priority, then fairness rule comes into effect.
+            // *
+            else if (priority[j] == priority[k]) {
+                if (speed_up_times[j] >= speed_up_times[k]) {
+                    while (amplify_factor * vel_total_k < initial_vel[k]) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], amplify_factor * vx_tmp[k], amplify_factor * vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = k;
+                            speed_up_times[k]++;
+                            is_adjust[k] = 1;
+                            vx_tmp[k] *= amplify_factor;
+                            vy_tmp[k] *= amplify_factor;
+                            break;
+                        }
+                        amplify_factor *= 2.0;
+                    }
+
+                    if (success == 0) {
+                        amplify_factor = 2.0;
+                        while (amplify_factor * vel_total_j < initial_vel[j]) {
+                            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                            if (ret == 0) {
+                                success = 1;
+                                adjusted_car = j;
+                                speed_up_times[j]++;
+                                is_adjust[j] = 1;
+                                vx_tmp[j] *= amplify_factor;
+                                vy_tmp[j] *= amplify_factor;
+                                break;
+                            }
+                            amplify_factor *= 2.0;
+                        }
+                    }
+                }
+                else {
+                    while (amplify_factor * vel_total_j < initial_vel[j]) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = j;
+                            speed_up_times[j]++;
+                            is_adjust[j] = 1;
+                            vx_tmp[j] *= amplify_factor;
+                            vy_tmp[j] *= amplify_factor;
+                            break;
+                        }
+                        amplify_factor *= 2.0;
+                    }
+
+                    if (success == 0) {
+                        amplify_factor = 2.0;
+                        while (amplify_factor * vel_total_k < initial_vel[k]) {
+                            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], amplify_factor * vx_tmp[k], amplify_factor * vy_tmp[k], safety_coe);
+                            if (ret == 0) {
+                                success = 1;
+                                adjusted_car = k;
+                                speed_up_times[k]++;
+                                is_adjust[k] = 1;
+                                vx_tmp[k] *= amplify_factor;
+                                vy_tmp[k] *= amplify_factor;
+                                break;
+                            }
+                            amplify_factor *= 2.0;
+                        }
+                    }
+                }
+
+                if (success == 0) {
+                    if (slow_down_times[j] > slow_down_times[k]) {
+                        adj_coe = 1.0 - adj_step_size;
+                        for (i = 0; i < adj_times; i++) {
+                            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], safety_coe);
+                            if (ret == 0) {
+                                success = 1;
+                                adjusted_car = k;
+                                slow_down_times[k]++;
+                                is_adjust[k] = 1;
+                                break;
+                            }
+                            else {
+                                adj_coe -= adj_step_size;
+                            }
+                        }
+
+                        if (success == 0) {
+                            adj_coe = 1.0 - adj_step_size;
+                            for (i = 0; i < adj_times; i++) {
+                                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                                if (ret == 0) {
+                                    success = 1;
+                                    adjusted_car = j;
+                                    slow_down_times[j]++;
+                                    is_adjust[j] = 1;
+                                    break;
+                                }
+                                else {
+                                    adj_coe -= adj_step_size;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        adj_coe = 1.0 - adj_step_size;
+                        for (i = 0; i < adj_times; i++) {
+                            ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                            if (ret == 0) {
+                                success = 1;
+                                adjusted_car = j;
+                                slow_down_times[j]++;
+                                is_adjust[j] = 1;
+                                break;
+                            }
+                            else {
+                                adj_coe -= adj_step_size;
+                            }
+                        }
+
+                        if (success == 0) {
+                            adj_coe = 1.0 - adj_step_size;
+                            for (i = 0; i < adj_times; i++) {
+                                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], safety_coe);
+                                if (ret == 0) {
+                                    success = 1;
+                                    adjusted_car = k;
+                                    slow_down_times[k]++;
+                                    is_adjust[k] = 1;
+                                    break;
+                                }
+                                else {
+                                    adj_coe -= adj_step_size;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else {
                 while (amplify_factor * vel_total_k < initial_vel[k]) {
-                    /* code */
                     ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], amplify_factor * vx_tmp[k], amplify_factor * vy_tmp[k], safety_coe);
                     if (ret == 0) {
                         success = 1;
                         adjusted_car = k;
+                        speed_up_times[k]++;
                         is_adjust[k] = 1;
                         vx_tmp[k] *= amplify_factor;
                         vy_tmp[k] *= amplify_factor;
@@ -917,40 +1114,58 @@ void scheduler_2() {
                     }
                     amplify_factor *= 2.0;
                 }
-            }
 
-
-            // *
-            // If the attempts to increase the speed of one car fails, try next to decrease the speed of the car.
-            // *
-            if (success == 0) {
-                adj_coe = 1.0 - adj_step_size;
-                for (i = 0; i < adj_times; i++) {
-                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
-                    if (ret == 0) {
-                        success = 1;
-                        adjusted_car = j;
-                        is_adjust[j] = 1;
-                        break;
-                    }
-                    else {
-                        adj_coe -= adj_step_size;
+                if (success == 0) {
+                    amplify_factor = 2.0;
+                    while (amplify_factor * vel_total_j < initial_vel[j]) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = j;
+                            speed_up_times[j]++;
+                            is_adjust[j] = 1;
+                            vx_tmp[j] *= amplify_factor;
+                            vy_tmp[j] *= amplify_factor;
+                            break;
+                        }
+                        amplify_factor *= 2.0;
                     }
                 }
-            }
 
-            if (success == 0) {
-                adj_coe = 1.0 - adj_step_size;
-                for (i = 0; i < adj_times; i++) {
-                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], safety_coe);
-                    if (ret == 0) {
-                        success = 1;
-                        adjusted_car = k;
-                        is_adjust[k] = 1;
-                        break;
+                // *
+                // If the attempts to increase the speed of one car fails, try next to decrease the speed of the car.
+                // *
+                if (success == 0) {
+                    adj_coe = 1.0 - adj_step_size;
+                    for (i = 0; i < adj_times; i++) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = j;
+                            slow_down_times[j]++;
+                            is_adjust[j] = 1;
+                            break;
+                        }
+                        else {
+                            adj_coe -= adj_step_size;
+                        }
                     }
-                    else {
-                        adj_coe -= adj_step_size;
+                }
+
+                if (success == 0) {
+                    adj_coe = 1.0 - adj_step_size;
+                    for (i = 0; i < adj_times; i++) {
+                        ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], safety_coe);
+                        if (ret == 0) {
+                            success = 1;
+                            adjusted_car = k;
+                            slow_down_times[k]++;
+                            is_adjust[k] = 1;
+                            break;
+                        }
+                        else {
+                            adj_coe -= adj_step_size;
+                        }
                     }
                 }
             }
@@ -969,6 +1184,7 @@ void scheduler_2() {
                 ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], adj_coe * vx_tmp[k], adj_coe * vy_tmp[k], coe);
                 if (ret == 0) {
                     adjusted_car = k;
+                    slow_down_times[k]++;
                     is_adjust[k] = 1;
                     slow_car[j][k] = j;
                 }
@@ -976,11 +1192,11 @@ void scheduler_2() {
                     ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
                     if (ret == 0) {
                         adjusted_car = j;
+                        slow_down_times[j]++;
                         is_adjust[j] = 1;
                         slow_car[j][k] = k;
                     }
                     else { 
-
                     }
                 }
 
