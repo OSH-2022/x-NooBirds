@@ -984,10 +984,10 @@ void scheduler_2() {
                     }
                 }
 
-                // *
-                // If 
-                //
-                // *
+                // // *
+                // // If the above initial methods fail, use this heuristic method to handle this corner case.
+                // // This method slows down the faster car.
+                // // *
                 // int cond1 = (x_tmp[j] < x_tmp[k]) && (vx_tmp[k] - vx_tmp[j] > 0);
                 // int cond2 = (x_tmp[j] > x_tmp[k]) && (vx_tmp[k] - vx_tmp[k] < 0);
                 // int cond3 = (fabs(y_tmp[j] - y_tmp[k]) < 20.0) && (fabs(vy_tmp[j] - vy_tmp[k] < 20.0));
@@ -1027,7 +1027,10 @@ void scheduler_2() {
                 //     }
                 // }
 
-
+                // *
+                // If the above initial methods fail, use this heuristic method to handle this corner case.
+                // This method tries to slow down the chasing car. If finds the chasing car by dot product.
+                // *
                 // long double r_jk[2] = {x_tmp[j] - x_tmp[k], y_tmp[j] - y_tmp[k]};
                 // long double product = vx_tmp[k] * r_jk[0] + vy_tmp[k] * r_jk[1];
                 // if (product > 0) {
@@ -1042,6 +1045,9 @@ void scheduler_2() {
                 // }
             }
         }
+        // // *
+        // // only handles one case
+        // // *
         // else { // try to update
         //     for (l = 0; l < OBJ_NUM; l++) {
         //         if (is_adjust[l] == 0) {
@@ -1096,16 +1102,15 @@ void scheduler_2() {
         //         need_update = 0;
         //     }
         // }
-        if (need_adjust == 1) {
-            for (i = 0; i < OBJ_NUM; i++) {
-                if (i == adjusted_car) {
-                    // vel_adjust[i][0] = adj_coe * obj_vx[i];
-                    // vel_adjust[i][1] = adj_coe * obj_vy[i];
-                    vx_tmp[i] = adj_coe * vx_tmp[i];
-                    vy_tmp[i] = adj_coe * vy_tmp[i];
-                }
-            }
-        }
+
+        // *
+        // Temporarily adjust the velocity of the adjusted car by changing its v{x,y}_tmp[].
+        // *
+        vx_tmp[adjusted_car] = adj_coe * vx_tmp[adjusted_car];
+        vy_tmp[adjusted_car] = adj_coe * vy_tmp[adjusted_car];
+        // // *
+        // // only handles one case
+        // // *
         // if (need_adjust == 0) {
         //     if (need_update == 1) {
         //         int flag = 1;
@@ -1163,6 +1168,11 @@ void scheduler_2() {
     }
     while (need_adjust == 1);
 
+
+    // *
+    // Recover the adjusted car's velocity to its initial maximum velocity so that the car that has been slowed down could gain speed again.
+    // No iterations here.
+    // *
     long double vx_save;
     long double vy_save;
     for (l = 0; l < OBJ_NUM; l++) {
@@ -1222,8 +1232,10 @@ void scheduler_2() {
         }
     }
 
-
+    // *
     // find the deadlocked state of the system and recover from the detected deadlock
+    // If two cars are running at very slow speed, then the deadlock may occur. Try to speed up the car.
+    // *
     long double vel_total[OBJ_NUM] = {0};
     for (i = 0; i < OBJ_NUM; i++) {
         vel_total[i] = sqrt(pow(vx_tmp[i], 2) + pow(vy_tmp[i], 2));
@@ -1257,6 +1269,10 @@ void scheduler_2() {
         }
     }
 
+
+    // *
+    // Send the adjusted velocity of each car to main().
+    // *
     for (i = 0; i < OBJ_NUM; i++) {
         vel_adjust[i][0] = vx_tmp[i];
         vel_adjust[i][1] = vy_tmp[i];
