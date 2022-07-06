@@ -12,7 +12,7 @@ const long double pi = 3.14159265358979323846;
 const long double adj_step_size = 0.097;
 const int adj_times = 10;
 
-#define OBJ_NUM       3
+#define OBJ_NUM             3
 
 #define PRINT_INTERVAL      400
 #define TIME_BET_SCHE       30
@@ -44,6 +44,9 @@ long double initial_vel[OBJ_NUM];
 
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
+
+int slow_down_time[OBJ_NUM] = {0};
+int priority[OBJ_NUM] = {0}; 
 
 long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
 long double obj_x     [OBJ_NUM];
@@ -766,6 +769,9 @@ void scheduler_1() {
 }
 
 void scheduler_2() {
+    // *
+    // variables declaration
+    // *
     // long double vx_initial[OBJ_NUM] = {0.0};
     // long double vy_initial[OBJ_NUM] = {0.0};
     // long double x_initial[OBJ_NUM] = {0.0};
@@ -787,7 +793,11 @@ void scheduler_2() {
     int need_adjust_total = 0;
     int ret = 0;
     int cnt = 0;
+    int error = 0;
 
+    // *
+    // Save the input position vectors and velocity vectors into temporary variables in order not to destroy the global variables.
+    // *
     for (i = 0; i < OBJ_NUM; i++) {
         // vx_initial[i] = obj_vx[i];
         // vy_initial[i] = obj_vy[i];
@@ -799,14 +809,27 @@ void scheduler_2() {
         vy_tmp[i] = obj_vy[i];
     }
 
+    // *
+    // This do-while loop can handle cases in which multiple pairs of cars are in an unsafe state and their speed need to be adjusted for safety.
+    // *
+    cnt = 0;
     do {
+        ret = 0;
+
+        // *
+        // Integer variable cnt is used to record the number of iterations do-while loop has performed.
+        // If the number of iterations is too high, then the whole system may probably be in a deadlocked state and the error signal should be asserted.
+        // *
         cnt++;
-        if (cnt > 10) {
-            Sleep(1);
+        if (cnt > (OBJ_NUM - 1) * OBJ_NUM) {
+            error = 1;
+            break;
         }
 
-        ret = 0;
-        // initial safety detection
+        // *
+        // Perform initial safety detection in order to find one and just one pair of cars that are in an unsafe state.
+        // If found, the unsafe car pairs are denoted by integer j and k where j < k.
+        // *
         for (j = 0; j < OBJ_NUM - 1; j++) {
             for (k = j + 1; k < OBJ_NUM; k++) {
                 long double coe;
@@ -828,6 +851,9 @@ void scheduler_2() {
             }
         }
 
+        // *
+        // If need_adjust = 0, then all pairs of cars are in a safe state so that the scheduler should jump out of the do-while loop.
+        // *
         if (ret == 0) {
             need_adjust = 0;
         }
@@ -848,19 +874,68 @@ void scheduler_2() {
         // if (j == 1 && k == 2) {
         //     Sleep(1);
         // }
+
+        // *
+        // Attempt to handle the unsafe state by first increasing the speed of one car.
+        // Integer success is used to indicate whether we have solved the unsafe problem.
+        // Increase the speed of one car without exceeding the maximum speed of car can lead to better traffic performances.
+        // *
+        long double amplify_factor = 2.0;
         if (ret == 1) {
             int success = 0;
-            adj_coe = 1.0 - adj_step_size;
-            for (i = 0; i < adj_times; i++) {
-                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+
+            long double vel_total_j;
+            long double vel_total_k;
+            vel_total_j = sqrt(pow(vx_tmp[j], 2) + pow(vy_tmp[j], 2));
+            vel_total_k = sqrt(pow(vx_tmp[k], 2) + pow(vy_tmp[k], 2));
+            while (amplify_factor * vel_total_j < initial_vel[j]) {
+                /* code */
+                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], amplify_factor * vx_tmp[j], amplify_factor * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
                 if (ret == 0) {
                     success = 1;
                     adjusted_car = j;
                     is_adjust[j] = 1;
+                    vx_tmp[j] *= amplify_factor;
+                    vy_tmp[j] *= amplify_factor;
                     break;
                 }
-                else {
-                    adj_coe -= adj_step_size;
+                amplify_factor *= 2.0;
+            }
+
+            if (success == 0) {
+                amplify_factor = 2.0;
+                while (amplify_factor * vel_total_k < initial_vel[k]) {
+                    /* code */
+                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], amplify_factor * vx_tmp[k], amplify_factor * vy_tmp[k], safety_coe);
+                    if (ret == 0) {
+                        success = 1;
+                        adjusted_car = k;
+                        is_adjust[k] = 1;
+                        vx_tmp[k] *= amplify_factor;
+                        vy_tmp[k] *= amplify_factor;
+                        break;
+                    }
+                    amplify_factor *= 2.0;
+                }
+            }
+
+
+            // *
+            // If the attempts to increase the speed of one car fails, try next to decrease the speed of the car.
+            // *
+            if (success == 0) {
+                adj_coe = 1.0 - adj_step_size;
+                for (i = 0; i < adj_times; i++) {
+                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], safety_coe);
+                    if (ret == 0) {
+                        success = 1;
+                        adjusted_car = j;
+                        is_adjust[j] = 1;
+                        break;
+                    }
+                    else {
+                        adj_coe -= adj_step_size;
+                    }
                 }
             }
 
@@ -880,6 +955,10 @@ void scheduler_2() {
                 }
             }
 
+            // *
+            // If the above methods all fail, then the two cars are in a corner state (the corner/critical state is entered because the scheduling algorithm does not know a single route of the car and is not always running(there is a given interval between two scheduling processes)).
+            // Try to stop one car to avoid accident.
+            // *
             if (success == 0) {
                 adj_coe = 0.001;
                 long double velocity_j = pow(obj_vx[j], 2) + pow(obj_vy[j], 2);
@@ -905,6 +984,10 @@ void scheduler_2() {
                     }
                 }
 
+                // *
+                // If 
+                //
+                // *
                 // int cond1 = (x_tmp[j] < x_tmp[k]) && (vx_tmp[k] - vx_tmp[j] > 0);
                 // int cond2 = (x_tmp[j] > x_tmp[k]) && (vx_tmp[k] - vx_tmp[k] < 0);
                 // int cond3 = (fabs(y_tmp[j] - y_tmp[k]) < 20.0) && (fabs(vy_tmp[j] - vy_tmp[k] < 20.0));
@@ -1135,6 +1218,41 @@ void scheduler_2() {
             else {
                 vx_tmp[l] = vx_save;
                 vy_tmp[l] = vy_save;
+            }
+        }
+    }
+
+
+    // find the deadlocked state of the system and recover from the detected deadlock
+    long double vel_total[OBJ_NUM] = {0};
+    for (i = 0; i < OBJ_NUM; i++) {
+        vel_total[i] = sqrt(pow(vx_tmp[i], 2) + pow(vy_tmp[i], 2));
+    }
+    long double angle_j;
+    long double angle_k;
+    for (j = 0; j < OBJ_NUM - 1; j++) {
+        for (k = j + 1; k < OBJ_NUM; k++) {
+            if (fabs(vel_total[j]) < 0.01 && fabs(vel_total[k] < 0.01)) {
+                angle_j = return_velocity_angle(j);
+                angle_k = return_velocity_angle(k);
+                ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], 0.0, 0.0, x_tmp[k], y_tmp[k], initial_vel[k] * cos(angle_k), initial_vel[k] * sin(angle_k), safety_coe - 1.0);
+                if (ret == 0) {
+                    vx_tmp[j] = 0.0;
+                    vy_tmp[j] = 0.0;
+                    vx_tmp[k] = initial_vel[k] * cos(angle_k);
+                    vy_tmp[k] = initial_vel[k] * sin(angle_k);
+                }
+                else {
+                    ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], initial_vel[j] * cos(angle_j), initial_vel[j] * sin(angle_j), x_tmp[k], y_tmp[k], 0.0, 0.0, safety_coe - 1.0);
+                    if (ret == 0) {
+                        vx_tmp[j] = initial_vel[j] * cos(angle_j);
+                        vy_tmp[j] = initial_vel[j] * sin(angle_j);
+                        vx_tmp[k] = 0.0;
+                        vy_tmp[k] = 0.0;
+                    }
+                    else {
+                    }
+                }
             }
         }
     }
