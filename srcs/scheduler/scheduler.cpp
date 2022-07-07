@@ -1517,9 +1517,17 @@ void scheduler_2() {
     // *
     // Send the adjusted velocity of each car to main().
     // *
-    for (i = 0; i < OBJ_NUM; i++) {
-        vel_adjust[i][0] = vx_tmp[i];
-        vel_adjust[i][1] = vy_tmp[i];
+    if (error == 1) {
+        for (i = 0; i < OBJ_NUM; i++) {
+            vel_adjust[i][0] = 0.0;
+            vel_adjust[i][1] = 0.0;
+        }
+    }
+    else {
+        for (i = 0; i < OBJ_NUM; i++) {
+            vel_adjust[i][0] = vx_tmp[i];
+            vel_adjust[i][1] = vy_tmp[i];
+        }
     }
 }
 
