@@ -308,10 +308,6 @@ void HeuristicScheduler::schedule() {
     // *
     // variables declaration
     // *
-    // long double vx_initial[OBJ_NUM] = {0.0};
-    // long double vy_initial[OBJ_NUM] = {0.0};
-    // long double x_initial[OBJ_NUM] = {0.0};
-    // long double y_initial[OBJ_NUM] = {0.0};
     long double x_tmp[OBJ_NUM]  = {0.0};
     long double y_tmp[OBJ_NUM]  = {0.0};
     long double vx_tmp[OBJ_NUM] = {0.0};
@@ -385,22 +381,6 @@ void HeuristicScheduler::schedule() {
         if (ret == 0) {
             need_adjust = 0;
         }
-
-        // if (sim_time > 41370 && obj_vx[0] > 0) {
-        //     Sleep(1);
-        // }
-        // if (obj_traj_seg[0] == EIGHT_LEFT_CIR && angle[i] < pi && obj_vx[0] > 0) {
-        //     Sleep(1);
-        // }
-        // if (j == 0 && k == 1) {
-        //     Sleep(1);
-        // // }
-        // if (j == 0 && k == 2 && sim_time > 43170) {
-        //     Sleep(1);
-        // }
-        // if (j == 1 && k == 2) {
-        //     Sleep(1);
-        // }
 
         // *
         // Attempt to handle the unsafe state by first increasing the speed of one car.
@@ -726,188 +706,13 @@ void HeuristicScheduler::schedule() {
                     else { 
                     }
                 }
-
-                // // *
-                // // If the above initial methods fail, use this heuristic method to handle this corner case.
-                // // This method slows down the faster car.
-                // // *
-                // int cond1 = (x_tmp[j] < x_tmp[k]) && (vx_tmp[k] - vx_tmp[j] > 0);
-                // int cond2 = (x_tmp[j] > x_tmp[k]) && (vx_tmp[k] - vx_tmp[k] < 0);
-                // int cond3 = (fabs(y_tmp[j] - y_tmp[k]) < 20.0) && (fabs(vy_tmp[j] - vy_tmp[k] < 20.0));
-                // if (cond3 && (cond2 || cond1)) {
-                //     if (fabs(vx_tmp[j]) < fabs(vx_tmp[k])) {
-                //         adjusted_car = j;
-                //         is_adjust[j] = 1;
-                //         slow_car[j][k] = k;
-                //     }
-                //     else {
-                //         adjusted_car = k;
-                //         is_adjust[k] = 1;
-                //         slow_car[j][k] = j;
-                //     }
-                // }
-                // else {
-                //     if (velocity_j > velocity_k) {
-                //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
-                //         // if (ret == 1) {
-                //         //     need_adjust = 0;
-                //         // }
-                //         // else {
-                //             adjusted_car = j;
-                //             is_adjust[j] = 1;
-                //             slow_car[j][k] = k;
-                //         // }
-                //     }
-                //     else {
-                //         // ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], adj_coe * vx_tmp[j], adj_coe * vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], 1.0);
-                //         // if (ret == 1) {
-                //         //     need_adjust = 0;
-                //         // }
-                //         // else {
-                //             adjusted_car = k;
-                //             is_adjust[k] = 1;
-                //             slow_car[j][k] = j;
-                //     }
-                // }
-
-                // *
-                // If the above initial methods fail, use this heuristic method to handle this corner case.
-                // This method tries to slow down the chasing car. If finds the chasing car by dot product.
-                // *
-                // long double r_jk[2] = {x_tmp[j] - x_tmp[k], y_tmp[j] - y_tmp[k]};
-                // long double product = vx_tmp[k] * r_jk[0] + vy_tmp[k] * r_jk[1];
-                // if (product > 0) {
-                //     adjusted_car = k;
-                //     is_adjust[k] = 1;
-                //     slow_car[j][k] = j;
-                // }
-                // else {
-                //     adjusted_car = j;
-                //     is_adjust[j] = 1;
-                //     slow_car[j][k] = k;
-                // }
             }
         }
-        // // *
-        // // only handles one case
-        // // *
-        // else { // try to update
-        //     for (l = 0; l < OBJ_NUM; l++) {
-        //         if (is_adjust[l] == 0) {
-        //             continue;
-        //         }
-        //         else {
-        //             for (i = 0; i < OBJ_NUM; i++) {
-        //                 if (i == l) {
-        //                     x_tmp[i] = obj_x[i];
-        //                     y_tmp[i] = obj_y[i];
-        //                     long double vel_angle;
-        //                     vel_angle = return_velocity_angle(i);
-        //                     vx_tmp[i] = initial_vel[i] * cos(vel_angle);
-        //                     vy_tmp[i] = initial_vel[i] * sin(vel_angle);
-        //                 }
-        //                 else {
-        //                     x_tmp[i] = obj_x[i];
-        //                     y_tmp[i] = obj_y[i];
-        //                     vx_tmp[i] = obj_vx[i];
-        //                     vy_tmp[i] = obj_vy[i];
-        //                 }
-        //             }
-
-        //             ret = 0;
-        //             for (j = 0; j < OBJ_NUM - 1; j++) {
-        //                 for (k = j + 1; k < OBJ_NUM; k++) {
-        //                     long double coe;
-        //                     if (l == slow_car[j][k] && corner_case[j][k] == 1) {
-        //                         coe = 1.0;
-        //                     }
-        //                     else {
-        //                         coe = safety_coe * 2.0;
-        //                     }
-        //                     ret = unsafe_state_detector(j, k, x_tmp[j], y_tmp[j], vx_tmp[j], vy_tmp[j], x_tmp[k], y_tmp[k], vx_tmp[k], vy_tmp[k], coe);
-        //                     if (ret == 1) {
-        //                         break;
-        //                     }
-        //                 }
-        //                 if (ret == 1) {
-        //                     break;
-        //                 }
-        //             }
-        //             if (ret == 0) {
-        //                 need_update = 1;
-        //                 is_adjust[l] = 0;
-        //                 updated_car = l;
-        //                 break;
-        //             }
-        //         }
-        //     }
-        //     if (ret == 1) {
-        //         need_update = 0;
-        //     }
-        // }
-
         // *
         // Temporarily adjust the velocity of the adjusted car by changing its v{x,y}_tmp[].
         // *
         vx_tmp[adjusted_car] = adj_coe * vx_tmp[adjusted_car];
         vy_tmp[adjusted_car] = adj_coe * vy_tmp[adjusted_car];
-        // // *
-        // // only handles one case
-        // // *
-        // if (need_adjust == 0) {
-        //     if (need_update == 1) {
-        //         int flag = 1;
-        //         for (k = updated_car + 1; k < OBJ_NUM; k++) {
-        //             if (corner_case[updated_car][k] == 1) {
-        //                 corner_case[updated_car][k] = 0;
-        //                 flag = 0;
-        //                 break;
-        //             }
-        //         }
-        //         if (flag == 1) {
-        //             for (j = 0; j < updated_car; j++) {
-        //                 if (corner_case[j][updated_car] == 1) {
-        //                     corner_case[j][updated_car] = 0;
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //         for (i = 0; i < OBJ_NUM; i++) {
-        //             if (i == updated_car) {
-        //                 long double vel_angle;
-        //                 vel_angle = return_velocity_angle(i);
-        //                 vel_adjust[i][0] = initial_vel[i] * cos(vel_angle);
-        //                 vel_adjust[i][1] = initial_vel[i] * sin(vel_angle);
-        //                 vx_tmp[i] = vel_adjust[i][0];
-        //                 vy_tmp[i] = vel_adjust[i][1];
-        //             }
-        //             else {
-        //                 // vel_adjust[i][0] = obj_vx[i];
-        //                 // vel_adjust[i][1] = obj_vy[i];
-        //             }
-        //         }
-        //     }
-        //     else {
-        //         for (i = 0; i < OBJ_NUM; i++) {
-        //             // vel_adjust[i][0] = obj_vx[i];
-        //             // vel_adjust[i][1] = obj_vy[i];
-        //         }
-        //     }
-        // }
-        // else {
-        //     for (i = 0; i < OBJ_NUM; i++) {
-        //         if (i == adjusted_car) {
-        //             // vel_adjust[i][0] = adj_coe * obj_vx[i];
-        //             // vel_adjust[i][1] = adj_coe * obj_vy[i];
-        //             vx_tmp[i] = vel_adjust[i][0];
-        //             vy_tmp[i] = vel_adjust[i][1];
-        //         }
-        //         else {
-        //             // vel_adjust[i][0] = obj_vx[i];
-        //             // vel_adjust[i][1] = obj_vy[i];
-        //         }
-        //     }
-        // }
     }
     while (need_adjust == 1);
 
