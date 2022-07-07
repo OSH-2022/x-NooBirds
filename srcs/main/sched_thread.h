@@ -64,6 +64,9 @@ private:
     // long double obj_radius[OBJ_NUM] = {150.0, 150.0};
     long double obj_radius[OBJ_NUM] = {300.0, 300.0};
     long double safety_coe = 1.3;
+    int slow_down_times[OBJ_NUM] = {0};
+    int speed_up_times[OBJ_NUM] = {0};
+    int priority[OBJ_NUM] = {0};
 
     // long double corner_radius = 200.0;
 
