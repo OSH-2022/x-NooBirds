@@ -52,13 +52,13 @@ long double initial_vel[OBJ_NUM];
 // *
 // Global variables used by the scheduler
 // used to implement priority-based scheduling and fair scheduling rule
+// *
 int slow_down_times[OBJ_NUM] = {0};
 int speed_up_times[OBJ_NUM] = {0};
 // The bigger the number is, the higher priority the car has.
 int priority[OBJ_NUM] = {0};
 int corner_case[OBJ_NUM][OBJ_NUM] = {0};
 int slow_car[OBJ_NUM][OBJ_NUM] = {0};
-// *
 
 
 // collision radius for each car
