@@ -49,11 +49,16 @@ long double initial_vel[OBJ_NUM];
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
-// used to implement priority-based scheduling and fair scheduling rule.
+// *
+// Global variables used by the scheduler
+// used to implement priority-based scheduling and fair scheduling rule
 int slow_down_times[OBJ_NUM] = {0};
 int speed_up_times[OBJ_NUM] = {0};
 // The bigger the number is, the higher priority the car has.
 int priority[OBJ_NUM] = {0};
+int corner_case[OBJ_NUM][OBJ_NUM] = {0};
+int slow_car[OBJ_NUM][OBJ_NUM] = {0};
+// *
 
 
 // collision radius for each car
@@ -98,7 +103,6 @@ int sim_time = 0;
 enum traj {rect, cir, tri, playground, eight};
 traj obj_traj[OBJ_NUM];
 int obj_traj_seg[OBJ_NUM];
-
 
 // *
 // prototype declarations for functions
@@ -546,7 +550,6 @@ int collision_detection() {
     return 0;
 }
 
-
 void scheduler_1() {
     long double obj_vx_initial[OBJ_NUM] = {0.0};
     long double obj_vy_initial[OBJ_NUM] = {0.0};
@@ -704,7 +707,7 @@ void scheduler_1() {
     int updated_car = 0;
     if (is_safe == 1) {
         for (int n = 0; n < OBJ_NUM; n++) {
-            if (is_adjust[n] == 0) {
+            if (is_adjust[n] == 0) {    
                 continue;
             }
             else {
@@ -733,7 +736,7 @@ void scheduler_1() {
                     for (j = 0; j < OBJ_NUM - 1; j++) {
                         for (k = j + 1; k < OBJ_NUM; k++) {
                             dist_sq = pow((obj_x_tmp[j] - obj_x_tmp[k]), 2) + pow((obj_y_tmp[j] - obj_y_tmp[k]), 2);
-                            if (dist_sq < pow((safety_coe * (obj_radius[j] + obj_radius[k])), 2)) {
+                            if (dist_sq < pow(((safety_coe + 1.0) * (obj_radius[j] + obj_radius[k])), 2)) {
                                 is_still_safe = 0;
                             }
                         }
