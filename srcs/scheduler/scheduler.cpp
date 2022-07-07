@@ -21,6 +21,9 @@ const int adj_times = 10;
 int is_adjust[OBJ_NUM] = {0};
 long double initial_vel[OBJ_NUM];
 
+// *
+// used for route rendering: rect, tri, eight
+// *
 #define UPPER_LEFT   0
 #define UPPER_EDGE   1
 #define UPPER_RIGHT  2
@@ -42,21 +45,34 @@ long double initial_vel[OBJ_NUM];
 #define EIGHT_PAR_LINE   2
 #define EIGHT_LEFT_CIR   3
 
+// used to set the moving direction of cars
 #define CLOCKWISE           0
 #define COUNTER_CLOCKWISE   1
 
+// used to implement priority-based scheduling and fair scheduling rule.
 int slow_down_times[OBJ_NUM] = {0};
 int speed_up_times[OBJ_NUM] = {0};
-int priority[OBJ_NUM] = {0};                 // The bigger the number is, the higher priority the car has.
+// The bigger the number is, the higher priority the car has.
+int priority[OBJ_NUM] = {0};
 
+
+// collision radius for each car
 long double obj_radius[OBJ_NUM] = {200.0, 200.0, 200.0};
+
+// real data for kinetic information for each car
 long double obj_x     [OBJ_NUM];
 long double obj_y     [OBJ_NUM];
 long double obj_vx    [OBJ_NUM];
 long double obj_vy    [OBJ_NUM];
+
+// output by the scheduler: recommended speed of each car
 long double vel_adjust[OBJ_NUM][2];
+
+
 long double safety_coe = 1.5;
 
+
+// parameters for route rendering and simulation
 long double corner_radius = 200.0;
 
 long double rect_center[2] = {0.0, 0.0};
@@ -83,9 +99,10 @@ enum traj {rect, cir, tri, playground, eight};
 traj obj_traj[OBJ_NUM];
 int obj_traj_seg[OBJ_NUM];
 
-int corner_case[OBJ_NUM][OBJ_NUM] = {0};
-int slow_car[OBJ_NUM][OBJ_NUM] = {0};
 
+// *
+// prototype declarations for functions
+// *
 void initialize_car(int i, traj traj, int traj_seg, long double x, long double y, long double angle, long double vel, int direction);
 void scheduler_1();
 void scheduler_2();
@@ -95,6 +112,9 @@ void print_location_concise();
 long double return_velocity_angle(int id);
 int unsafe_state_detector(int j, int k, long double jx, long double jy, long double jvx, long double jvy, long double kx, long double ky, long double kvx, long double kvy, long double coe);
 
+// *
+// Simulator
+// *
 int main(int argc, char **argv) {
     obj_x[0] = eight_center[0];
     obj_y[0] = eight_center[1] - eight_len;
@@ -506,6 +526,10 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+
+// *
+// Test whether there exists a pair of cars that have been collided with each other in the current state.
+// *
 int collision_detection() {
     long double dist_sq = 0;
     int j = 0;
@@ -521,6 +545,7 @@ int collision_detection() {
     }
     return 0;
 }
+
 
 void scheduler_1() {
     long double obj_vx_initial[OBJ_NUM] = {0.0};
