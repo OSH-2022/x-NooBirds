@@ -29,6 +29,23 @@ Project of the group NooBirds for OSH-2022.
 
 ## Current file tree
 ```code
++-- srcs
+|   +-- car_detect
+|   |   +-- src
+|   │
+|   +-- client_program
+|   │   +-- src
+|   |
+|   +-- main
+|   |   +-- src
+|   │
+|   +-- scheduler
+|       +-- scheduler.cpp
+|       +-- schedulerRVO2
+|       │   +-- src
+|       │
+|       └─videos
+|
 +-- docs
 |   +-- images
 |   +-- research.md
@@ -36,6 +53,9 @@ Project of the group NooBirds for OSH-2022.
 |   +-- feasibility.md
 |   +-- feasibility.pdf
 |   +-- midterm.pptx
+|   +-- final_report.md
+|   +-- final_report.pdf
+|   +-- final.pptx
 |
 +-- group_works
 |   +-- discussions
